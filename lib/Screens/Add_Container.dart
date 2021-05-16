@@ -1,0 +1,290 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:petrol_station_app/Widgets/drawer_firstore.dart';
+
+class AddContainer_Firestore extends StatefulWidget {
+  AddContainer_Firestore({Key key}) : super(key: key);
+
+  @override
+  _AddContainer_FirestoreState createState() => _AddContainer_FirestoreState();
+}
+
+class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
+  TextEditingController t1 = new TextEditingController();
+  TextEditingController t2 = new TextEditingController();
+  TextEditingController t3 = new TextEditingController();
+  TextEditingController t4 = new TextEditingController();
+
+  var category;
+  int Fuel_Type_Id;
+
+  void addContainer() async {
+
+    QuerySnapshot _myDoc = await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc('Petrol Station 1')
+        .collection('Container')
+        .get();
+    List<DocumentSnapshot> _myDocCount = _myDoc.docs;
+    int n = _myDocCount.length;
+    print('The lenght of document is{$n}');
+    n = n + 1;
+    
+    
+    var s = await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc('Petrol Station 1')
+        .collection('Fuel_Type')
+        .where('Fuel_Name', isEqualTo: category)
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  // print(val.docs[0].get("Fuel_Type_Id")),
+
+                  Fuel_Type_Id = val.docs[0].get("Fuel_Type_Id"),
+                }
+              else
+                {print("Not Found")}
+            });
+
+    FirebaseFirestore.instance
+        .collection('Stations')
+        .doc('Petrol Station 1')
+        .collection('Container')
+        .doc(n.toString())
+        .set({
+      'Container_Id': n,
+      'Container_Name': t1.text.toString(),
+      'Capacity': int.parse(t2.text),
+      'Fuel_Type_Id': Fuel_Type_Id,
+      'Volume': int.parse(t4.text)
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // addContainer();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: Colors.indigo[50],
+        appBar: AppBar(
+          backgroundColor: Color(0xFF083369),
+          actions: [
+            Row(
+              children: [
+                Icon(
+                  Icons.exit_to_app,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                Text('LOGOUT',
+                    style: TextStyle(color: Colors.white, fontSize: 21.0)),
+                SizedBox(width: 20)
+              ],
+            )
+          ],
+        ),
+        drawer: getDrawer_firstore(),
+        body: ListView(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Text(' Add Container',
+                  style: TextStyle(
+                    color: Colors.amberAccent,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w500,
+                  )),
+            ),
+            Padding(
+                padding: EdgeInsets.all(12),
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text("Container Name",
+                            style:
+                                TextStyle(fontSize: 21, color: Colors.black45)),
+                        SizedBox(height: 10),
+                        TextFormField(
+                            controller: t1,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      color: Colors.black, width: 2.0),
+                                ),
+                                labelText: "Container Name",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.blueAccent, width: 2.0))),
+                            onChanged: (String s) {}),
+                        SizedBox(
+                          height: 12,
+                        ),
+                        Text("Capicity ",
+                            style:
+                                TextStyle(fontSize: 21, color: Colors.black45)),
+                        SizedBox(height: 10),
+                        TextFormField(
+                            controller: t2,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      color: Colors.black, width: 2.0),
+                                ),
+                                labelText: "1000",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.blueAccent, width: 2.0))),
+                            onChanged: (String s) {}),
+                        SizedBox(
+                          height: 12,
+                        ),
+                        Text("Fuel Type",
+                            style:
+                                TextStyle(fontSize: 21, color: Colors.black45)),
+                        SizedBox(height: 10),
+                        StreamBuilder(
+                            stream: FirebaseFirestore.instance
+                                .collection('Stations')
+                                .doc('Petrol Station 1')
+                                .collection('Fuel_Type')
+                                .snapshots(),
+                            builder: (context,
+                                AsyncSnapshot<QuerySnapshot> snapshot) {
+                              if (!snapshot.hasData)
+                                Center(
+                                  child: const CupertinoActivityIndicator(),
+                                );
+
+                              return Container(
+                                  width: 350.0,
+                                  height: 58,
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                          width: 1.0, style: BorderStyle.solid),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(5.0)),
+                                    ),
+                                  ),
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    iconSize: 24,
+                                    elevation: 16,
+                                    style:
+                                        const TextStyle(color: Colors.black45),
+
+                                    value: category,
+                                    //isDense: true,
+                                    hint: Text('Fuel Type'),
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        category = newValue;
+                                      });
+                                    },
+                                    items: snapshot.data != null
+                                        ? snapshot.data.docs
+                                            .map((DocumentSnapshot document) {
+                                            return new DropdownMenuItem<String>(
+                                                value: document
+                                                    .get('Fuel_Name')
+                                                    .toString(),
+                                                child: new Container(
+                                                  // height: 20.0,
+
+                                                  //color: primaryColor,
+
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 7, left: 8),
+                                                    child: new Text(
+                                                      document
+                                                          .get('Fuel_Name')
+                                                          .toString(),
+                                                      style: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.w900),
+                                                    ),
+                                                  ),
+                                                ));
+                                          }).toList()
+                                        : DropdownMenuItem(
+                                            value: 'null',
+                                            child: new Container(
+                                              height: 100.0,
+                                              child: new Text('null'),
+                                            ),
+                                          ),
+                                  ));
+                            }),
+                        SizedBox(height: 12),
+                        Text("Initial Volume ",
+                            style:
+                                TextStyle(fontSize: 21, color: Colors.black45)),
+                        SizedBox(height: 10),
+                        TextFormField(
+                            controller: t4,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                      color: Colors.black, width: 2.0),
+                                ),
+                                labelText: "Initial Volume",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.blueAccent, width: 2.0))),
+                            onChanged: (String s) {}),
+                        SizedBox(
+                          height: 12,
+                        ),
+                        ButtonTheme(
+                          height: 50.0,
+                          minWidth: 130,
+                          child: RaisedButton(
+                            color: Colors.indigo[800],
+                            elevation: 12,
+                            child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.library_add_check_outlined,
+                                      size: 22, color: Colors.white),
+                                  SizedBox(
+                                    width: 14,
+                                  ),
+                                  Text('Save',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 25)),
+                                ]),
+                            onPressed: () {
+                              addContainer();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ))
+          ],
+        ));
+  }
+}
