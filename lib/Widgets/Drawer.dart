@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_petrol_station/Screens/Add_Container.dart';
+import 'package:flutter_petrol_station/Screens/All_Pumps.dart';
+import 'package:flutter_petrol_station/Screens/Container_Detail.dart';
 import 'package:flutter_petrol_station/Screens/Dashboard.dart';
 
 class getDrawer extends StatelessWidget {
@@ -50,6 +53,17 @@ class getDrawer extends StatelessWidget {
               Icon(Icons.arrow_drop_down, size: 20, color: Colors.indigo[300]),
           children: [
             
+                       InkWell(
+                  onTap: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AllPumps()),
+                    );
+                  },
+                  child:
+                  Text('All Pumps' ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w900)),
+                ),  
+            SizedBox(height: 10),
             StreamBuilder(
                   stream: FirebaseFirestore.instance.collection('Stations').doc('Petrol Station 1').collection('Pump').snapshots(),
                   builder: (context, snapshot){
@@ -206,7 +220,14 @@ ExpansionTile(
                         itemBuilder: (context, index){
                           DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
                           return InkWell(
-                  onTap: (){ },
+                  onTap: (){ 
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>
+                       Container_Details(documentSnapshot["Container_Id"],documentSnapshot["Container_Name"])),
+                    );
+
+                  },
                   child:Center(child:
                   
                   Padding(
@@ -226,11 +247,11 @@ ExpansionTile(
                   onTap: (){
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => null),
+                      MaterialPageRoute(builder: (context) => AddContainer_Firestore()),
                     );
                   },
                   child:
-                  Text('Add Container' ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w400)),
+                  Text('Add Container' ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w900)),
                 ),  
           
           ]

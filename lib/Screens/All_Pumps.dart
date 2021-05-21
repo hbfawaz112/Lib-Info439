@@ -15,11 +15,21 @@ class _AllPumpsState extends State<AllPumps> {
   int containerid;
   int last_pump_record;
   int new_pump_record;
+  int pump_name_error=-1;
+  int initial_counter_error=-1;
 
   TextEditingController t1 = new TextEditingController();
   TextEditingController t2 = new TextEditingController();
 
   void Add_Pump() async {
+
+      if(t1.text=='' || t2.text==''){
+        setState(() {
+          pump_name_error=1;
+          initial_counter_error=1;
+        });
+      }
+    else{
     //get the number of documents
     QuerySnapshot _myDoc = await FirebaseFirestore.instance
         .collection('Stations')
@@ -130,6 +140,7 @@ class _AllPumpsState extends State<AllPumps> {
       'X_Id': DateTime.now(),
       'Record_Time': DateTime.now()
     });
+    }
   }
 
   @override
@@ -199,6 +210,10 @@ class _AllPumpsState extends State<AllPumps> {
                                             color: Colors.blueAccent,
                                             width: 2.0))),
                                 onChanged: (String s) {}),
+                                Text(
+                                  pump_name_error==1 ? 'Enter a pump name':'',
+                                  style: TextStyle(color: Colors.red,fontSize: 18),
+                                ),
                             SizedBox(
                               height: 20,
                             ),
@@ -302,6 +317,7 @@ class _AllPumpsState extends State<AllPumps> {
                                     fontSize: 21, color: Colors.black45)),
                             SizedBox(height: 5),
                             TextFormField(
+                                keyboardType: TextInputType.number,
                                 controller: t2,
                                 style: TextStyle(color: Colors.black),
                                 decoration: InputDecoration(
@@ -318,6 +334,10 @@ class _AllPumpsState extends State<AllPumps> {
                                             color: Colors.blueAccent,
                                             width: 2.0))),
                                 onChanged: (String s) {}),
+                                  Text(
+                                  initial_counter_error==1 ? 'Enter an initial Counter':'',
+                                  style: TextStyle(fontSize: 18,color: Colors.red),
+                                ),
                             SizedBox(
                               height: 12,
                             ),

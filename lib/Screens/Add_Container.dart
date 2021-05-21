@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:petrol_station_app/Widgets/drawer_firstore.dart';
+import 'package:flutter_petrol_station/Widgets/Drawer.dart';
 
 class AddContainer_Firestore extends StatefulWidget {
   AddContainer_Firestore({Key key}) : super(key: key);
@@ -16,11 +16,38 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
   TextEditingController t3 = new TextEditingController();
   TextEditingController t4 = new TextEditingController();
 
-  var category;
-  int Fuel_Type_Id;
+  int container_name_error=-1;
+  int capacity_error=-1;
+  int volume_error=-1;
 
+  var category;
+  String station;
+  int Fuel_Type_Id;
+  int lastid;
   void addContainer() async {
 
+    if(t1.text==''){
+      setState(() {
+        container_name_error=1;
+      });
+    }
+    else if(t2.text=='')
+    {
+      setState(() {
+        capacity_error=1;
+      });
+    }
+    else if(t4.text==''){
+      setState(() {
+        volume_error=1;
+      });
+    }
+    else{
+       setState(() {
+        container_name_error=-1;
+         capacity_error=-1;
+         volume_error=-1;
+      });
     QuerySnapshot _myDoc = await FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
@@ -29,14 +56,14 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
     List<DocumentSnapshot> _myDocCount = _myDoc.docs;
     int n = _myDocCount.length;
     print('The lenght of document is{$n}');
-    n = n + 1;
+    
     
     
     var s = await FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
         .collection('Fuel_Type')
-        .where('Fuel_Name', isEqualTo: category)
+        .where('Fuel_Type_Name', isEqualTo: category)
         .get()
         .then((val) => {
               if (val.docs.length > 0)
@@ -49,18 +76,36 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                 {print("Not Found")}
             });
 
+ var s1 = await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc('Petrol Station 1')
+        .collection('Container')
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  // print(val.docs[0].get("Fuel_Type_Id")),
+
+                  lastid = val.docs[n-1].get("Container_Id"),
+                  print('last id is  : ${lastid}')
+                }
+              else
+                {print("Not Found")}
+            });
+
     FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
         .collection('Container')
-        .doc(n.toString())
+        .doc( (lastid+1).toString())
         .set({
-      'Container_Id': n,
+      'Container_Id': lastid+1,
       'Container_Name': t1.text.toString(),
       'Capacity': int.parse(t2.text),
       'Fuel_Type_Id': Fuel_Type_Id,
       'Volume': int.parse(t4.text)
     });
+    }
   }
 
   @override
@@ -90,7 +135,7 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
             )
           ],
         ),
-        drawer: getDrawer_firstore(),
+        drawer: getDrawer(),
         body: ListView(
           children: [
             Padding(
@@ -128,6 +173,10 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                     borderSide: BorderSide(
                                         color: Colors.blueAccent, width: 2.0))),
                             onChanged: (String s) {}),
+
+                            Text(container_name_error==1?'You must enter a valid container name':'' , style: TextStyle(
+                              fontSize: 18.0,color:Colors.red
+                            ),),
                         SizedBox(
                           height: 12,
                         ),
@@ -136,6 +185,7 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.number,
                             controller: t2,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
@@ -150,6 +200,9 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                     borderSide: BorderSide(
                                         color: Colors.blueAccent, width: 2.0))),
                             onChanged: (String s) {}),
+                               Text(capacity_error==1?'You must enter a valid capacity':'' , style: TextStyle(
+                              fontSize: 18.0,color:Colors.red
+                            ),),
                         SizedBox(
                           height: 12,
                         ),
@@ -202,7 +255,7 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                             .map((DocumentSnapshot document) {
                                             return new DropdownMenuItem<String>(
                                                 value: document
-                                                    .get('Fuel_Name')
+                                                    .get('Fuel_Type_Name')
                                                     .toString(),
                                                 child: new Container(
                                                   // height: 20.0,
@@ -215,7 +268,7 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                                             top: 7, left: 8),
                                                     child: new Text(
                                                       document
-                                                          .get('Fuel_Name')
+                                                          .get('Fuel_Type_Name')
                                                           .toString(),
                                                       style: TextStyle(
                                                           fontSize: 20,
@@ -234,12 +287,13 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                           ),
                                   ));
                             }),
-                        SizedBox(height: 12),
+                        SizedBox(height: 20),
                         Text("Initial Volume ",
                             style:
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.number,
                             controller: t4,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
@@ -254,6 +308,9 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                     borderSide: BorderSide(
                                         color: Colors.blueAccent, width: 2.0))),
                             onChanged: (String s) {}),
+                               Text(volume_error==1?'You must enter a valid volume':'' , style: TextStyle(
+                              fontSize: 18.0,color:Colors.red
+                            ),),
                         SizedBox(
                           height: 12,
                         ),

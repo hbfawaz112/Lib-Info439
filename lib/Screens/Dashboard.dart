@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_petrol_station/Services/authprovider.dart';
+import 'package:flutter_petrol_station/Services/cloud_services.dart';
 import 'package:flutter_petrol_station/Widgets/Drawer.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 import 'Login_Screen.dart';
+import 'Login_v2.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -12,6 +15,13 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+
+    User loggedInUser;
+    String station;
+    String id;
+     CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+
    Future getContainers() async {
     var snapshot = await FirebaseFirestore.instance
         .collection('Stations')
@@ -32,10 +42,20 @@ class _DashboardState extends State<Dashboard> {
         .get();
     return s;
   }
-
+  void asyncMethod () async{
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+      print(' your station is : ${station}');
+    }
+    setState(() {});
+  }
   @override
   void initState() {
     super.initState();
+    loggedInUser = cloudServices.getCurrentUser();
+    id=loggedInUser.uid;
+    print('okiii ${id}');
+    asyncMethod();
   }
   @override
   Widget build(BuildContext context) {
@@ -52,7 +72,7 @@ class _DashboardState extends State<Dashboard> {
                  await AuthProvider().logOut();
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Login()),
+                  MaterialPageRoute(builder: (context) => Loginv2()),
                 );
               },
               child: Row(
