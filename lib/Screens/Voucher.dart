@@ -15,13 +15,21 @@ class _VoucherState extends State<Voucher> {
   int Fuel_Type_Id;
   int Customer_Id;
   int last_voucher_id;
-  TextEditingController t1= new TextEditingController();
-  TextEditingController t2= new TextEditingController();
-  TextEditingController t3= new TextEditingController();
+  int voucher_value_error = -1;
+  TextEditingController t1 = new TextEditingController();
+  TextEditingController t2 = new TextEditingController();
+  TextEditingController t3 = new TextEditingController();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    t2.text = DateTime.now().toString();
+  }
 
   void Add_Voucher() async {
-          //get the fueul_type_id of the selected fuel type
-          await FirebaseFirestore.instance
+    //get the fueul_type_id of the selected fuel type
+    await FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
         .collection('Fuel_Type')
@@ -39,8 +47,8 @@ class _VoucherState extends State<Voucher> {
                 {print("Not Found")}
             });
 
-          //get the customer id  of the selected customer name
-            await FirebaseFirestore.instance
+    //get the customer id  of the selected customer name
+    await FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
         .collection('Customer')
@@ -58,12 +66,12 @@ class _VoucherState extends State<Voucher> {
                 {print("Not Found")}
             });
 
-          //get the last voucher id in firstore and add 1 to it:
-             await FirebaseFirestore.instance
+    //get the last voucher id in firstore and add 1 to it:
+    await FirebaseFirestore.instance
         .collection('Stations')
         .doc('Petrol Station 1')
         .collection('Voucher')
-        .orderBy('Voucher_Id',descending: true)
+        .orderBy('Voucher_Id', descending: true)
         .get()
         .then((val) => {
               if (val.docs.length > 0)
@@ -75,21 +83,25 @@ class _VoucherState extends State<Voucher> {
                 {print("Not Found")}
             });
 
-      
-    FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Voucher')
-        .doc( (last_voucher_id+1).toString())
-        .set({
-      'Voucher_Id': last_voucher_id+1,
-      'Customer_Id': Customer_Id,
-      'Fuel_Type_Id': Fuel_Type_Id,
-      'Note':t3.text,
-      'Voucher_Date': DateTime.parse(t2.text),
-      'Voucher_Value':int.parse(t1.text)
-    });
-
+    if (t1.text == '') {
+      setState(() {
+        voucher_value_error = 1;
+      });
+    } else {
+      FirebaseFirestore.instance
+          .collection('Stations')
+          .doc('Petrol Station 1')
+          .collection('Voucher')
+          .doc((last_voucher_id + 1).toString())
+          .set({
+        'Voucher_Id': last_voucher_id + 1,
+        'Customer_Id': Customer_Id,
+        'Fuel_Type_Id': Fuel_Type_Id,
+        'Note': t3.text,
+        'Voucher_Date': DateTime.parse(t2.text),
+        'Voucher_Value': int.parse(t1.text)
+      });
+    }
   }
 
   @override
@@ -139,7 +151,7 @@ class _VoucherState extends State<Voucher> {
                             style:
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
-                       StreamBuilder(
+                        StreamBuilder(
                             stream: FirebaseFirestore.instance
                                 .collection('Stations')
                                 .doc('Petrol Station 1')
@@ -222,8 +234,8 @@ class _VoucherState extends State<Voucher> {
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
-                          controller: t1,
-                          keyboardType: TextInputType.number,
+                            controller: t1,
+                            keyboardType: TextInputType.number,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
                                 enabledBorder: const OutlineInputBorder(
@@ -237,7 +249,13 @@ class _VoucherState extends State<Voucher> {
                                     borderSide: BorderSide(
                                         color: Colors.blueAccent, width: 2.0))),
                             onChanged: (String s) {}),
-                        SizedBox(height: 10),
+                        SizedBox(height: 5),
+                        Text(
+                            voucher_value_error == 1
+                                ? 'Invalid Voucher value(must enter a valid one)'
+                                : '',
+                            style: TextStyle(color: Colors.red, fontSize: 21)),
+                        SizedBox(height: 5),
                         Text("Customer Name",
                             style:
                                 TextStyle(fontSize: 21, color: Colors.black45)),
@@ -319,13 +337,13 @@ class _VoucherState extends State<Voucher> {
                                           ),
                                   ));
                             }),
-                        SizedBox(height: 15),
+                        SizedBox(height: 20),
                         Text("Voucher Date",
                             style:
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
-                           controller: t2,
+                            controller: t2,
                             keyboardType: TextInputType.datetime,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
@@ -342,9 +360,9 @@ class _VoucherState extends State<Voucher> {
                                     borderSide: BorderSide(
                                         color: Colors.blueAccent, width: 2.0))),
                             onChanged: (String s) {}),
-                        SizedBox(height: 15),
+                        SizedBox(height: 25),
                         TextFormField(
-                           controller: t3,
+                            controller: t3,
                             maxLines: 3,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
@@ -375,7 +393,9 @@ class _VoucherState extends State<Voucher> {
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 25)),
                                 ]),
-                            onPressed: () {Add_Voucher();},
+                            onPressed: () {
+                              Add_Voucher();
+                            },
                           ),
                         ),
                       ],
