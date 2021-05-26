@@ -18,6 +18,7 @@ class _Container_DetailsState extends State<Container_Details> {
       TextEditingController t1 = new TextEditingController();
       int volume;
       int newvolume;
+      int max_volume_error=-1;
     @override
   void initState() {
     // TODO: implement initState
@@ -27,6 +28,9 @@ class _Container_DetailsState extends State<Container_Details> {
     
   }
     void update_volume() async{
+
+
+
       //get the volume of specific container id;
       var s = await FirebaseFirestore.instance
         .collection('Stations')
@@ -44,7 +48,14 @@ class _Container_DetailsState extends State<Container_Details> {
               else
                 {print("Not Found")}
             });
-
+        if(int.parse(t1.text)>volume){
+              setState(() {
+                max_volume_error=1;
+              });
+        }else{
+           setState(() {
+                max_volume_error=-1;
+              });
       newvolume = volume - int.parse(t1.text);
        FirebaseFirestore.instance
         .collection('Stations')
@@ -52,7 +63,7 @@ class _Container_DetailsState extends State<Container_Details> {
         .collection('Container')
         .doc('${id}')
         .update({'Volume':newvolume});
-
+        }
     }
 
   @override
@@ -97,6 +108,7 @@ class _Container_DetailsState extends State<Container_Details> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
+                            keyboardType: TextInputType.number,
                             controller: t1,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
@@ -113,6 +125,7 @@ class _Container_DetailsState extends State<Container_Details> {
                                           width: 2.0))),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
+                          Text(max_volume_error==1?'You must select a volume with maximum value ${volume}':'',style: TextStyle(color: Colors.red,fontSize: 22.0)),
                           Divider(color: Colors.black38),
                           Divider(color: Colors.black38),
                           SizedBox(height: 15),
