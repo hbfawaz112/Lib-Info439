@@ -481,8 +481,13 @@ class _AllPumpsState extends State<AllPumps> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => Pump_Records(documentSnapshot["Pump_Id"],documentSnapshot["Pump_Name"])),
-                                        );
+                                              builder: (context) => 
+                                              
+                                        Pump_Records(
+                                 pumpID: documentSnapshot["Pump_Id"],
+                                pumpName: documentSnapshot["Pump_Name"])
+                                        ),
+                                      );
                                       },
                                     ),
                                   ),
