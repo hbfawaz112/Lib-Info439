@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_petrol_station/Widgets/Drawer.dart';
 
+import 'Pump_Records.dart';
+
 class AllPumps extends StatefulWidget {
   @override
   _AllPumpsState createState() => _AllPumpsState();
@@ -479,7 +481,7 @@ class _AllPumpsState extends State<AllPumps> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => null),
+                                              builder: (context) => Pump_Records(documentSnapshot["Pump_Id"],documentSnapshot["Pump_Name"])),
                                         );
                                       },
                                     ),
