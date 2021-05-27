@@ -1,16 +1,48 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_petrol_station/Screens/Add_Container.dart';
-import 'package:flutter_petrol_station/Screens/Add_Fuel_Type.dart';
-import 'package:flutter_petrol_station/Screens/All_Pumps.dart';
-import 'package:flutter_petrol_station/Screens/Container_Detail.dart';
-import 'package:flutter_petrol_station/Screens/Dashboard.dart';
-import 'package:flutter_petrol_station/Screens/Provider.dart';
-import 'package:flutter_petrol_station/Screens/Pump_Records.dart';
-import 'package:flutter_petrol_station/Screens/Shipments.dart';
-import 'package:flutter_petrol_station/Screens/Voucher.dart';
+import 'package:flutter_petrol_station/screens/Add_Container.dart';
+import 'package:flutter_petrol_station/screens/dashboard_firstore.dart';
+import 'package:flutter_petrol_station/screens/shipments.dart';
+import 'package:flutter_petrol_station/services/cloud_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/screens/pump_records.dart';
+import 'package:flutter_petrol_station/screens/All_Pumps.dart';
+import 'package:flutter_petrol_station/screens/Voucher.dart';
+import 'package:flutter_petrol_station/screens/Add_Fuel_Type.dart';
+import 'package:flutter_petrol_station/screens/Provider.dart';
+import 'package:flutter_petrol_station/screens/Container_Detail.dart';
 
-class getDrawer extends StatelessWidget {
+class getDrawer extends StatefulWidget {
+  @override
+  _getDrawerState createState() => _getDrawerState();
+}
+
+class _getDrawerState extends State<getDrawer> {
+  User loggedInUser;
+
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+
+  String station;
+
+  @override
+  void initState() {
+    super.initState();
+    loggedInUser = cloudServices.getCurrentUser();
+    asyncMethod();
+  }
+
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+    }
+    setState(() {});
+    // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
+    // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -40,12 +72,12 @@ class getDrawer extends StatelessWidget {
         leading: Icon(Icons.home_outlined, color: Colors.grey, size: 35.0),
         onTap: () {
           Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Dashboard()),
-            );
+            context,
+            MaterialPageRoute(builder: (context) => Dashboard_Firstore()),
+          );
         },
       ),
-      
+
       ExpansionTile(
           title: Text("Pumps",
               style: TextStyle(
@@ -57,237 +89,243 @@ class getDrawer extends StatelessWidget {
           trailing:
               Icon(Icons.arrow_drop_down, size: 20, color: Colors.indigo[300]),
           children: [
-            
-                       InkWell(
-                  onTap: (){
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AllPumps()),
-                    );
-                  },
-                  child:
-                  Text('All Pumps' ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w900)),
-                ),  
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AllPumps()),
+                );
+              },
+              child: Text('All Pumps',
+                  style: TextStyle(
+                      fontSize: 21,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w900)),
+            ),
             SizedBox(height: 10),
             StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection('Stations').doc('Petrol Station 1').collection('Pump').snapshots(),
-                  builder: (context, snapshot){
-                    if(snapshot.hasData){
-                      return ListView.builder(
+                stream: FirebaseFirestore.instance
+                    .collection('Stations')
+                    .doc(station)
+                    .collection('Pump')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
                         shrinkWrap: true,
                         itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index){
-                          DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
+                        itemBuilder: (context, index) {
+                          DocumentSnapshot documentSnapshot =
+                              snapshot.data.docs[index];
                           return InkWell(
-                  onTap: (){ 
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Pump_Records(
+                                          pumpID: documentSnapshot["Pump_Id"],
+                                          pumpName:
+                                              documentSnapshot["Pump_Name"])),
+                                );
+                              },
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(documentSnapshot["Pump_Name"],
+                                      style: TextStyle(
+                                          fontSize: 21,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w300)),
+                                ),
+                              ));
+                        });
+                  } else {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                }),
+          ]),
+      new ListTile(
+        title: Text("Shipments",
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              fontSize: 23,
+            )),
+        leading: Icon(Icons.directions_bus, color: Colors.grey, size: 35.0),
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Shipments()));
+        },
+      ),
+      new ListTile(
+        title: Text("Voucher",
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              fontSize: 23,
+            )),
+        leading: Icon(Icons.local_atm, color: Colors.grey, size: 35.0),
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Voucher()));
+        },
+      ),
+      new ListTile(
+        title: Text("Customers",
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              fontSize: 23,
+            )),
+        leading: Icon(Icons.group_outlined, color: Colors.grey, size: 35.0),
+        onTap: () {},
+      ),
 
-                      Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Pump_Records(documentSnapshot["Pump_Id"] , documentSnapshot["Pump_Name"] )
-                      ),
-                    );
-                  },
-                  child:Center(child:
-                  
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(documentSnapshot["Pump_Name"] ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w300)),
-                  ),
-                  
-                ));
-                        });}
-                        else{
-                          return  Center(child:CircularProgressIndicator());
-                        }
-                        }),
-                          
-          
-          ]
-          
-          ),
-           new ListTile(
-          title: Text("Shipments",
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                fontSize: 23,
-              )),
-          leading: Icon(Icons.directions_bus, color: Colors.grey, size: 35.0),
-          onTap: () {
-             Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Shipments())
-                    );
-          },
-        ),
-        new ListTile(
-          title: Text("Voucher",
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                fontSize: 23,
-              )),
-          leading: Icon(Icons.local_atm, color: Colors.grey, size: 35.0),
-          onTap: () {
-             Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Voucher())
-                    );
-          },
-        ),
-        new ListTile(
-          title: Text("Customers",
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                fontSize: 23,
-              )),
-          leading: Icon(Icons.group_outlined, color: Colors.grey, size: 35.0),
-          onTap: () {
-            
-          },
-        ),
-        
       ExpansionTile(
           title: Text("Fuel Types",
               style: TextStyle(
                   fontSize: 23,
                   color: Colors.black,
                   fontWeight: FontWeight.w300)),
-          leading:
-              Icon(Icons.invert_colors, color: Colors.grey, size: 35.0),
+          leading: Icon(Icons.invert_colors, color: Colors.grey, size: 35.0),
           trailing:
               Icon(Icons.arrow_drop_down, size: 20, color: Colors.indigo[300]),
           children: [
-            
             StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection('Stations').doc('Petrol Station 1').collection('Fuel_Type').snapshots(),
-                  builder: (context, snapshot){
-                    if(snapshot.hasData){
-                      return ListView.builder(
+                stream: FirebaseFirestore.instance
+                    .collection('Stations')
+                    .doc(station)
+                    .collection('Fuel_Type')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
                         shrinkWrap: true,
                         itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index){
-                          DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
+                        itemBuilder: (context, index) {
+                          DocumentSnapshot documentSnapshot =
+                              snapshot.data.docs[index];
                           return InkWell(
-                  onTap: (){ },
-                  child:Center(child:
-                  
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(documentSnapshot["Fuel_Type_Name"] ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w300)),
-                  ),
-                  
-                ));
-                        });}
-                        else{
-                          return  Center(child:CircularProgressIndicator());
-                        }
-                        }),
-
-
-                        InkWell(
-                          onTap: (){
-                             Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) =>AddFuelType()));
-                          },
-                          child: Text("Add Type" ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w700))),
-                          
-          
-          ]
-          
-          ),
-           new ListTile(
-          title: Text("Accounting",
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                fontSize: 23,
-              )),
-          leading: Icon(Icons.monetization_on_outlined,
-              color: Colors.grey, size: 35.0),
-          onTap: () {
-            
-          },
-        ),
-        new ListTile(
-          title: Text("Provider",
-              style: TextStyle(
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                fontSize: 23,
-              )),
-          leading: Icon(Icons.supervisor_account_sharp,
-              color: Colors.grey, size: 35.0),
-          onTap: () {
-             Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) =>Providers()));
-          },
-        ),
-ExpansionTile(
+                              onTap: () {},
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                      documentSnapshot["Fuel_Type_Name"],
+                                      style: TextStyle(
+                                          fontSize: 21,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w300)),
+                                ),
+                              ));
+                        });
+                  } else {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                }),
+            InkWell(
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => AddFuelType()));
+                },
+                child: Text("Add Type",
+                    style: TextStyle(
+                        fontSize: 21,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700))),
+          ]),
+      new ListTile(
+        title: Text("Accounting",
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              fontSize: 23,
+            )),
+        leading: Icon(Icons.monetization_on_outlined,
+            color: Colors.grey, size: 35.0),
+        onTap: () {},
+      ),
+      new ListTile(
+        title: Text("Provider",
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              fontSize: 23,
+            )),
+        leading: Icon(Icons.supervisor_account_sharp,
+            color: Colors.grey, size: 35.0),
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Providers()));
+        },
+      ),
+      ExpansionTile(
           title: Text("Containers",
               style: TextStyle(
                   fontSize: 23,
                   color: Colors.black,
                   fontWeight: FontWeight.w300)),
-          leading:
-              Icon(Icons.gradient, color: Colors.grey, size: 35.0),
+          leading: Icon(Icons.gradient, color: Colors.grey, size: 35.0),
           trailing:
               Icon(Icons.arrow_drop_down, size: 20, color: Colors.indigo[300]),
           children: [
-            
             StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection('Stations').doc('Petrol Station 1').collection('Container').snapshots(),
-                  builder: (context, snapshot){
-                    if(snapshot.hasData){
-                      return ListView.builder(
+                stream: FirebaseFirestore.instance
+                    .collection('Stations')
+                    .doc(station)
+                    .collection('Container')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
                         shrinkWrap: true,
                         itemCount: snapshot.data.docs.length,
-                        itemBuilder: (context, index){
-                          DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
+                        itemBuilder: (context, index) {
+                          DocumentSnapshot documentSnapshot =
+                              snapshot.data.docs[index];
                           return InkWell(
-                  onTap: (){ 
-                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) =>
-                       Container_Details(documentSnapshot["Container_Id"],documentSnapshot["Container_Name"])),
-                    );
-
-                  },
-                  child:Center(child:
-                  
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text("Container "+documentSnapshot["Container_Name"] ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w300)),
-                  ),
-                  
-                ));
-                        });}
-                        else{
-                          return  Center(child:CircularProgressIndicator());
-                        }
-                        }),
-
-
-                       InkWell(
-                  onTap: (){
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AddContainer_Firestore()),
-                    );
-                  },
-                  child:
-                  Text('Add Container' ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w900)),
-                ),  
-          
-          ]
-          
-          ),
-          Divider(),
-      
-       
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Container_Details(
+                                          documentSnapshot["Container_Id"],
+                                          documentSnapshot["Container_Name"])),
+                                );
+                              },
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                      "Container " +
+                                          documentSnapshot["Container_Name"],
+                                      style: TextStyle(
+                                          fontSize: 21,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w300)),
+                                ),
+                              ));
+                        });
+                  } else {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                }),
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => AddContainer_Firestore()),
+                );
+              },
+              child: Text('Add Container',
+                  style: TextStyle(
+                      fontSize: 21,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w900)),
+            ),
+          ]),
+      Divider(),
     ]));
   }
 }
