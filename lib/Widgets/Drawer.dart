@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_petrol_station/Screens/Add_Container.dart';
+import 'package:flutter_petrol_station/Screens/Add_Fuel_Type.dart';
 import 'package:flutter_petrol_station/Screens/All_Pumps.dart';
 import 'package:flutter_petrol_station/Screens/Container_Detail.dart';
 import 'package:flutter_petrol_station/Screens/Dashboard.dart';
+import 'package:flutter_petrol_station/Screens/Provider.dart';
+import 'package:flutter_petrol_station/Screens/Pump_Records.dart';
+import 'package:flutter_petrol_station/Screens/Shipments.dart';
+import 'package:flutter_petrol_station/Screens/Voucher.dart';
 
 class getDrawer extends StatelessWidget {
   @override
@@ -74,7 +79,14 @@ class getDrawer extends StatelessWidget {
                         itemBuilder: (context, index){
                           DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
                           return InkWell(
-                  onTap: (){ },
+                  onTap: (){ 
+
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Pump_Records(documentSnapshot["Pump_Id"] , documentSnapshot["Pump_Name"] )
+                      ),
+                    );
+                  },
                   child:Center(child:
                   
                   Padding(
@@ -102,7 +114,10 @@ class getDrawer extends StatelessWidget {
               )),
           leading: Icon(Icons.directions_bus, color: Colors.grey, size: 35.0),
           onTap: () {
-            
+             Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Shipments())
+                    );
           },
         ),
         new ListTile(
@@ -114,7 +129,10 @@ class getDrawer extends StatelessWidget {
               )),
           leading: Icon(Icons.local_atm, color: Colors.grey, size: 35.0),
           onTap: () {
-            
+             Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Voucher())
+                    );
           },
         ),
         new ListTile(
@@ -166,7 +184,15 @@ class getDrawer extends StatelessWidget {
                           return  Center(child:CircularProgressIndicator());
                         }
                         }),
-                        Text("Add Type" ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w700)),
+
+
+                        InkWell(
+                          onTap: (){
+                             Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>AddFuelType()));
+                          },
+                          child: Text("Add Type" ,style: TextStyle(fontSize: 21, color: Colors.black,fontWeight: FontWeight.w700))),
                           
           
           ]
@@ -195,7 +221,9 @@ class getDrawer extends StatelessWidget {
           leading: Icon(Icons.supervisor_account_sharp,
               color: Colors.grey, size: 35.0),
           onTap: () {
-            
+             Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) =>Providers()));
           },
         ),
 ExpansionTile(
