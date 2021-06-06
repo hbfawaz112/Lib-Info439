@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_petrol_station/Widgets/Drawer.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/Services/cloud_services.dart';
 
 class Voucher extends StatefulWidget {
+  static String id = 'Voucher';
   @override
   _VoucherState createState() => _VoucherState();
 }
@@ -20,18 +24,38 @@ class _VoucherState extends State<Voucher> {
   TextEditingController t2 = new TextEditingController();
   TextEditingController t3 = new TextEditingController();
 
+  String station, pStation;
+  User loggedInUser;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     t2.text = DateTime.now().toString();
+    loggedInUser = cloudServices.getCurrentUser();
+    print("user");
+    print(loggedInUser);
+    asyncMethod();
   }
+
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+    }
+    setState(() {});
+    // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
+    // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
+  }
+
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
   void Add_Voucher() async {
     //get the fueul_type_id of the selected fuel type
     await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Fuel_Type')
         .where('Fuel_Type_Name', isEqualTo: fuel_type)
         .get()
@@ -50,7 +74,7 @@ class _VoucherState extends State<Voucher> {
     //get the customer id  of the selected customer name
     await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Customer')
         .where('Customer_Name', isEqualTo: customer_name)
         .get()
@@ -69,7 +93,7 @@ class _VoucherState extends State<Voucher> {
     //get the last voucher id in firstore and add 1 to it:
     await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Voucher')
         .orderBy('Voucher_Id', descending: true)
         .get()
@@ -90,7 +114,7 @@ class _VoucherState extends State<Voucher> {
     } else {
       FirebaseFirestore.instance
           .collection('Stations')
-          .doc('Petrol Station 1')
+          .doc(station)
           .collection('Voucher')
           .doc((last_voucher_id + 1).toString())
           .set({
@@ -154,7 +178,7 @@ class _VoucherState extends State<Voucher> {
                         StreamBuilder(
                             stream: FirebaseFirestore.instance
                                 .collection('Stations')
-                                .doc('Petrol Station 1')
+                                .doc(station)
                                 .collection('Fuel_Type')
                                 .snapshots(),
                             builder: (context,
@@ -263,7 +287,7 @@ class _VoucherState extends State<Voucher> {
                         StreamBuilder(
                             stream: FirebaseFirestore.instance
                                 .collection('Stations')
-                                .doc('Petrol Station 1')
+                                .doc(station)
                                 .collection('Customer')
                                 .snapshots(),
                             builder: (context,

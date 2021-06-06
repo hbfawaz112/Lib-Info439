@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_petrol_station/Widgets/Drawer.dart';
-
-import 'Pump_Records.dart';
+import 'package:flutter_petrol_station/screens/pump_records.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/services/cloud_services.dart';
 
 class AllPumps extends StatefulWidget {
+  static String id = "All_Pumps";
   @override
   _AllPumpsState createState() => _AllPumpsState();
 }
@@ -17,131 +19,156 @@ class _AllPumpsState extends State<AllPumps> {
   int containerid;
   int last_pump_record;
   int new_pump_record;
-  int pump_name_error=-1;
-  int initial_counter_error=-1;
+  int pump_name_error = -1;
+  int initial_counter_error = -1;
 
+  FirebaseFirestore db = FirebaseFirestore.instance;
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
   TextEditingController t1 = new TextEditingController();
   TextEditingController t2 = new TextEditingController();
 
+  String station;
+  User loggedInUser;
+
+  @override
+  void initState() {
+    super.initState();
+    loggedInUser = cloudServices.getCurrentUser();
+    asyncMethod();
+    print("inittt");
+    print(station);
+    // future that allows us to access context. function is called inside the future
+    // otherwise it would be skipped and args would return null
+    //getContainerInfo(widget.pumpID);
+    //print(station);
+  }
+
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+    }
+  }
+
   void Add_Pump() async {
+    if (t1.text == '' || t2.text == '') {
+      setState(() {
+        pump_name_error = 1;
+        initial_counter_error = 1;
+      });
+    } else {
+      //get the number of documents
+      QuerySnapshot _myDoc = await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump')
+          .get();
+      List<DocumentSnapshot> _myDocCount = _myDoc.docs;
+      int n = _myDocCount.length;
+      print('The lenght of documents of pump collection is{$n}');
 
-      if(t1.text=='' || t2.text==''){
-        setState(() {
-          pump_name_error=1;
-          initial_counter_error=1;
-        });
-      }
-    else{
-    //get the number of documents
-    QuerySnapshot _myDoc = await FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump')
-        .get();
-    List<DocumentSnapshot> _myDocCount = _myDoc.docs;
-    int n = _myDocCount.length;
-    print('The lenght of documents of pump collection is{$n}');
+      //get the last pump doc id :
+      await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump')
+          .orderBy('Pump_Id', descending: true)
+          .get()
+          .then((val) => {
+                if (val.docs.length > 0)
+                  {
+                    lastpumpid = val.docs[0].get("Container_Id"),
+                    print('last id is  : ${lastpumpid}')
+                  }
+                else
+                  {print("Not Found")}
+              });
 
-    //get the last pump doc id :
-    await FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump')
-        .orderBy('Pump_Id',descending: true)
-        .get()
-        .then((val) => {
-              if (val.docs.length > 0)
-                {
-                  lastpumpid = val.docs[0].get("Container_Id"),
-                  print('last id is  : ${lastpumpid}')
-                }
-              else
-                {print("Not Found")}
-            });
+      newpumpid = lastpumpid + 1;
+      print('new  pump id is ${newpumpid}');
 
-    newpumpid = lastpumpid + 1;
-    print('new  pump id is ${newpumpid}');
+      //get the id of selected container name
+      await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Container')
+          .where('Container_Name', isEqualTo: category)
+          .get()
+          .then((val) => {
+                if (val.docs.length > 0)
+                  {
+                    containerid = val.docs[0].get("Container_Id"),
+                    print("select container has id ${containerid}")
+                  }
+                else
+                  {print("Not Found")}
+              });
+      print(DateTime.now());
 
-    //get the id of selected container name
-    await FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Container')
-        .where('Container_Name', isEqualTo: category)
-        .get()
-        .then((val) => {
-              if (val.docs.length > 0)
-                {
-                  containerid = val.docs[0].get("Container_Id"),
-                  print("select container has id ${containerid}")
-                }
-              else
-                {print("Not Found")}
-            });
-    print(DateTime.now());
+      /************/
 
-    /************/
+      // NOW ADD ALL THESE DATA TO A NEW PUMP DOCUMENT IN PUMP COLLECTION
+      FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump')
+          .doc(newpumpid.toString())
+          .set({
+        'Container_Id': containerid,
+        'Pump_Id': newpumpid,
+        'Pump_Name': t1.text,
+        'X_Id': DateTime.now()
+      });
+      print('done addedd');
 
-    // NOW ADD ALL THESE DATA TO A NEW PUMP DOCUMENT IN PUMP COLLECTION
-   FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump')
-        .doc(newpumpid.toString())
-        .set({
-      'Container_Id': containerid,
-      'Pump_Id': newpumpid,
-      'Pump_Name': t1.text,
-      'X_Id': DateTime.now()
-    });
-    print('done addedd');
+      //then create for it a new pump record with record is the initial counter:
 
-    //then create for it a new pump record with record is the initial counter:
+      //get the number of documents
+      QuerySnapshot _myDoc1 = await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump_Record')
+          .get();
+      List<DocumentSnapshot> _myDocCount1 = _myDoc1.docs;
+      int n1 = _myDocCount1.length;
+      print('The lenght of document pump_record is{$n1}');
 
-    //get the number of documents
-    QuerySnapshot _myDoc1 = await FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump_Record')
-        .get();
-    List<DocumentSnapshot> _myDocCount1 = _myDoc1.docs;
-    int n1 = _myDocCount1.length;
-    print('The lenght of document pump_record is{$n1}');
+      //get the last doc id (pump record id): and the newone (+1)
+      await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump_Record')
+          .orderBy('Pump_Record_Id', descending: true)
+          .get()
+          .then((val) => {
+                if (val.docs.length > 0)
+                  {
+                    last_pump_record = val.docs[0].get("Pump_Record_Id"),
+                    print('last id is  : ${last_pump_record}')
+                  }
+                else
+                  {print("Not Found")}
+              });
 
-    //get the last doc id (pump record id): and the newone (+1)
-    await FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump_Record')
-        .orderBy('Pump_Record_Id',descending: true)
-        .get()
-        .then((val) => {
-              if (val.docs.length > 0)
-                {
-                  last_pump_record = val.docs[0].get("Pump_Record_Id"),
-                  print('last id is  : ${last_pump_record}')
-                }
-              else
-                {print("Not Found")}
-            });
+      new_pump_record = last_pump_record + 1;
+      print('new pumprecordid id is ${new_pump_record}');
 
-    new_pump_record = last_pump_record + 1;
-    print('new pumprecordid id is ${new_pump_record}');
-
-    //Add the new pump_record_document
-    FirebaseFirestore.instance
-        .collection('Stations')
-        .doc('Petrol Station 1')
-        .collection('Pump_Record')
-        .doc(new_pump_record.toString())
-        .set({
-      'Pump_Record_Id': new_pump_record,
-      'Container_Id': containerid,
-      'Pump_Id': newpumpid,
-      'Record': int.parse(t2.text),
-      'X_Id': DateTime.now(),
-      'Record_Time': DateTime.now()
-    });
+      //Add the new pump_record_document
+      FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Pump_Record')
+          .doc(new_pump_record.toString())
+          .set({
+        'Pump_Record_Id': new_pump_record,
+        'Container_Id': containerid,
+        'Pump_Id': newpumpid,
+        'Record': int.parse(t2.text),
+        'X_Id': DateTime.now(),
+        'Record_Time': DateTime.now()
+      });
     }
   }
 
@@ -212,10 +239,10 @@ class _AllPumpsState extends State<AllPumps> {
                                             color: Colors.blueAccent,
                                             width: 2.0))),
                                 onChanged: (String s) {}),
-                                Text(
-                                  pump_name_error==1 ? 'Enter a pump name':'',
-                                  style: TextStyle(color: Colors.red,fontSize: 18),
-                                ),
+                            Text(
+                              pump_name_error == 1 ? 'Enter a pump name' : '',
+                              style: TextStyle(color: Colors.red, fontSize: 18),
+                            ),
                             SizedBox(
                               height: 20,
                             ),
@@ -226,7 +253,7 @@ class _AllPumpsState extends State<AllPumps> {
                             StreamBuilder(
                                 stream: FirebaseFirestore.instance
                                     .collection('Stations')
-                                    .doc('Petrol Station 1')
+                                    .doc(station)
                                     .collection('Container')
                                     .snapshots(),
                                 builder: (context,
@@ -336,10 +363,12 @@ class _AllPumpsState extends State<AllPumps> {
                                             color: Colors.blueAccent,
                                             width: 2.0))),
                                 onChanged: (String s) {}),
-                                  Text(
-                                  initial_counter_error==1 ? 'Enter an initial Counter':'',
-                                  style: TextStyle(fontSize: 18,color: Colors.red),
-                                ),
+                            Text(
+                              initial_counter_error == 1
+                                  ? 'Enter an initial Counter'
+                                  : '',
+                              style: TextStyle(fontSize: 18, color: Colors.red),
+                            ),
                             SizedBox(
                               height: 12,
                             ),
@@ -376,7 +405,7 @@ class _AllPumpsState extends State<AllPumps> {
             StreamBuilder(
                 stream: FirebaseFirestore.instance
                     .collection('Stations')
-                    .doc('Petrol Station 1')
+                    .doc(station)
                     .collection('Pump')
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -412,20 +441,20 @@ class _AllPumpsState extends State<AllPumps> {
                                           StreamBuilder(
                                               stream: FirebaseFirestore.instance
                                                   .collection('Stations')
-                                                  .doc('Petrol Station 1')
+                                                  .doc(station)
                                                   .collection('Container')
                                                   .where('Container_Id',
                                                       isEqualTo:
                                                           documentSnapshot[
                                                               "Container_Id"])
-                                                  
                                                   .snapshots(),
                                               builder: (context, snapshot) {
                                                 if (snapshot.hasData) {
                                                   DocumentSnapshot
                                                       documentSnapshot2 =
                                                       snapshot.data.docs[0];
-                                                  return Text('${documentSnapshot2["Container_Name"]}',
+                                                  return Text(
+                                                      '${documentSnapshot2["Container_Name"]}',
                                                       style: TextStyle(
                                                           color: Colors
                                                               .yellowAccent,
@@ -442,7 +471,7 @@ class _AllPumpsState extends State<AllPumps> {
                                       StreamBuilder(
                                           stream: FirebaseFirestore.instance
                                               .collection('Stations')
-                                              .doc('Petrol Station 1')
+                                              .doc(station)
                                               .collection('Pump_Record')
                                               .where('Pump_Id',
                                                   isEqualTo: documentSnapshot[
@@ -481,13 +510,14 @@ class _AllPumpsState extends State<AllPumps> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => 
-                                              
-                                        Pump_Records(
-                                 pumpID: documentSnapshot["Pump_Id"],
-                                pumpName: documentSnapshot["Pump_Name"])
-                                        ),
-                                      );
+                                              builder: (context) =>
+                                                  Pump_Records(
+                                                      pumpID: documentSnapshot[
+                                                          "Pump_Id"],
+                                                      pumpName:
+                                                          documentSnapshot[
+                                                              "Pump_Name"])),
+                                        );
                                       },
                                     ),
                                   ),

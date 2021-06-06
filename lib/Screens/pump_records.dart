@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_petrol_station/widgets/drawer_firstore.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_petrol_station/services/cloud_services.dart';
@@ -90,7 +90,7 @@ class _PumpsState extends State<Pump_Records> {
 
     await db
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Container')
         .doc(container_id.toString())
         .get()
@@ -123,6 +123,27 @@ class _PumpsState extends State<Pump_Records> {
       print("container idddddd: $cont_id");
       containerID = cont_id;
     });
+  }
+
+  void getLastRecordId() {
+    var qs = db
+        .collection('Stations')
+        .doc(station)
+        .collection('Pump_Record')
+        .orderBy('Pump_Record_Id', descending: true)
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  lastRecordId = val.docs[0].get("Pump_Record_Id"),
+                  print("last record iddddd$lastRecordId"),
+                }
+              else
+                {
+                  print("elseeeee"),
+                }
+            });
+    setState(() {});
   }
 
   void getPumpRecord() {
@@ -160,9 +181,10 @@ class _PumpsState extends State<Pump_Records> {
                   print(previousCounter),
                   lastUpdate = DateTime.tryParse(
                       (val.docs[0].get("Record_Time")).toDate().toString()),
+
                   print(lastUpdate),
-                  lastRecordId = val.docs[0].get("Pump_Record_Id"),
-                  print("last record iddddd$lastRecordId"),
+                  //lastRecordId = val.docs[0].get("Pump_Record_Id"),
+                  //print("last record iddddd$lastRecordId"),
                 }
               else
                 {
@@ -190,6 +212,7 @@ class _PumpsState extends State<Pump_Records> {
     int _rowPerPage = PaginatedDataTable.defaultRowsPerPage;
 
     getPumpRecord();
+    getLastRecordId();
 
     print("previous $previousCounter");
 
@@ -215,7 +238,7 @@ class _PumpsState extends State<Pump_Records> {
           )
         ],
       ),
-      drawer: getDrawer_firstore(),
+      drawer: getDrawer(),
       body: ListView(
         children: <Widget>[
           Padding(
@@ -223,7 +246,7 @@ class _PumpsState extends State<Pump_Records> {
             child: Text(
               containerName != null ? 'Pump ($containerName)' : 'Pump',
               style: TextStyle(
-                color: Colors.amberAccent,
+                color: Colors.amber,
                 fontSize: 30,
                 fontWeight: FontWeight.w500,
               ),
@@ -233,9 +256,9 @@ class _PumpsState extends State<Pump_Records> {
             elevation: 12,
             child: ExpansionTile(
               title: Text("Pump Info",
-                  style: TextStyle(fontSize: 29, color: Colors.indigo[300])),
+                  style: TextStyle(fontSize: 29, color: Colors.blue[900])),
               trailing: Icon(Icons.arrow_drop_down,
-                  size: 20, color: Colors.indigo[300]),
+                  size: 20, color: Colors.blue.shade900),
               children: [
                 Padding(
                   padding: EdgeInsets.all(20),
@@ -253,7 +276,7 @@ class _PumpsState extends State<Pump_Records> {
                           padding: EdgeInsets.all(12),
                           child: Text('Pump Name',
                               style: TextStyle(
-                                  fontSize: 25, color: Colors.black45)),
+                                  fontSize: 25, color: Colors.blue.shade800)),
                         ),
                       ),
                       SizedBox(
@@ -271,7 +294,7 @@ class _PumpsState extends State<Pump_Records> {
                           padding: EdgeInsets.all(12),
                           child: Text('Container Name',
                               style: TextStyle(
-                                  fontSize: 25, color: Colors.black45)),
+                                  fontSize: 25, color: Colors.blue.shade800)),
                         ),
                       ),
                       SizedBox(
@@ -299,7 +322,8 @@ class _PumpsState extends State<Pump_Records> {
               child: Column(
                 children: [
                   Text("New Counter",
-                      style: TextStyle(fontSize: 21, color: Colors.black45)),
+                      style:
+                          TextStyle(fontSize: 21, color: Colors.blue.shade800)),
                   SizedBox(height: 10),
                   Column(
                     children: <Widget>[
@@ -308,18 +332,22 @@ class _PumpsState extends State<Pump_Records> {
                           controller: msgController,
                           style: TextStyle(color: Colors.black),
                           decoration: InputDecoration(
-                              enabledBorder: const OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                    color: Colors.black54, width: 2.0),
-                              ),
-                              labelText: previousCounter != null
-                                  ? previousCounter.toString()
-                                  : '',
-                              fillColor: Colors.white,
-                              labelStyle: TextStyle(color: Colors.black45),
-                              focusedBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: colorR, width: 2.0))),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: colorR),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(32.0)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: colorR, width: 2.0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(32.0)),
+                            ),
+                            labelText: previousCounter != null
+                                ? previousCounter.toString()
+                                : '',
+                            fillColor: Colors.white,
+                            labelStyle: TextStyle(color: Colors.black45),
+                          ),
                           onChanged: (value) {
                             setState(() {
                               newCounter = int.parse(value);
@@ -381,7 +409,9 @@ class _PumpsState extends State<Pump_Records> {
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: Text(
-                          lastUpdate != null ? lastUpdate.toString() : '',
+                          lastUpdate != null
+                              ? formatter.format(lastUpdate)
+                              : '',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
@@ -451,6 +481,7 @@ class _PumpsState extends State<Pump_Records> {
                                 //(myTimeStamp).toDate().toString());
                                 previousCounter = newCounter;
                                 lastUpdate = DateTime.now();
+                                newCounter = null;
                               });
                               msgController.clear();
                             }
@@ -470,47 +501,13 @@ class _PumpsState extends State<Pump_Records> {
           SizedBox(
             height: 25,
           ),
-          // StreamBuilder(
-          //     stream: db
-          //         .collection('Stations')
-          //         .doc(station)
-          //         .collection('Pump_Record')
-          //         .snapshots(),
-          //     builder: (context, snapshot) {
-          //       if (snapshot.hasData) {
-          //         dts = new DTS(snapshot);
-          //         return SingleChildScrollView(
-          //             child: PaginatedDataTable(
-          //           header: Row(
-          //             children: <Widget>[
-          //               Text("Date"),
-          //               Text("Counter"),
-          //               Text(""),
-          //             ],
-          //           ),
-          //           columns: [
-          //             DataColumn(label: Text("col1")),
-          //             DataColumn(label: Text("col2")),
-          //           ],
-          //           source: dts,
-          //           onRowsPerPageChanged: (value) {
-          //             setState(() {
-          //               _rowPerPage = value;
-          //             });
-          //           },
-          //           rowsPerPage: _rowPerPage,
-          //         ));
-          //       } else {
-          //         return Text('');
-          //       }
-          //     }),
           Card(
             elevation: 12,
             child: ExpansionTile(
               title: Text("Previous Record",
-                  style: TextStyle(fontSize: 29, color: Colors.indigo[300])),
+                  style: TextStyle(fontSize: 29, color: Colors.blue.shade900)),
               trailing: Icon(Icons.arrow_drop_down,
-                  size: 20, color: Colors.indigo[300]),
+                  size: 20, color: Colors.blue.shade900),
               children: [
                 Padding(
                   padding: EdgeInsets.all(20),
@@ -520,18 +517,24 @@ class _PumpsState extends State<Pump_Records> {
                       TextFormField(
                           style: TextStyle(color: Colors.black),
                           decoration: InputDecoration(
-                              enabledBorder: const OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                    color: Colors.black, width: 2.0),
-                              ),
-                              labelText: "Search Here",
-                              fillColor: Colors.white,
-                              labelStyle: TextStyle(color: Colors.black45),
-                              focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: Colors.blueAccent, width: 2.0))),
+                            labelText: "Search Here",
+                            fillColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: Colors.blue.shade100,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: colorR),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(32.0)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: colorR, width: 2.0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(32.0)),
+                            ),
+                          ),
                           onChanged: (String s) {}),
-                      SizedBox(height: 10),
+                      SizedBox(height: 40),
                       StreamBuilder(
                           stream: db
                               .collection('Stations')
@@ -549,7 +552,7 @@ class _PumpsState extends State<Pump_Records> {
                                 children: <Widget>[
                                   Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                        MainAxisAlignment.spaceEvenly,
                                     children: <Widget>[
                                       Text('Date'),
                                       Text('Counter'),
@@ -571,8 +574,7 @@ class _PumpsState extends State<Pump_Records> {
                                           children: [
                                             Row(
                                               mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                                                  MainAxisAlignment.spaceEvenly,
                                               children: <Widget>[
                                                 Text((documentSnapshot[
                                                                 'Record_Time']
@@ -594,7 +596,88 @@ class _PumpsState extends State<Pump_Records> {
                                                           icon: const Icon(
                                                               Icons.delete),
                                                           color: Colors.red,
-                                                          onPressed: () {},
+                                                          onPressed: () {
+                                                            print(
+                                                                "Deleteeeeeeeeeeeeeeeee");
+                                                            int docID =
+                                                                documentSnapshot[
+                                                                    'Pump_Record_Id'];
+                                                            String docId = docID
+                                                                .toString();
+                                                            db
+                                                                .collection(
+                                                                    'Stations')
+                                                                .doc(station)
+                                                                .collection(
+                                                                    'Pump_Record')
+                                                                .doc(docId)
+                                                                .delete()
+                                                                .then((value) {
+                                                              db
+                                                                  .collection(
+                                                                      'Stations')
+                                                                  .doc(station)
+                                                                  .collection(
+                                                                      'Pump_Record')
+                                                                  .where(
+                                                                      'Pump_Id',
+                                                                      isEqualTo:
+                                                                          pumpID)
+                                                                  .orderBy(
+                                                                      'Pump_Record_Id',
+                                                                      descending:
+                                                                          true)
+                                                                  .get()
+                                                                  .then(
+                                                                      (val) => {
+                                                                            if (val.docs.length >
+                                                                                0)
+                                                                              {
+                                                                                setState(() {
+                                                                                  previousCounter = val.docs[0].get("Record");
+
+                                                                                  lastUpdate = DateTime.tryParse((val.docs[0].get("Record_Time")).toDate().toString());
+                                                                                }),
+                                                                                print(previousCounter),
+                                                                                print(lastUpdate),
+                                                                              }
+                                                                            else
+                                                                              {
+                                                                                print("elseeeee"),
+                                                                              }
+                                                                          });
+                                                              db
+                                                                  .collection(
+                                                                      'Stations')
+                                                                  .doc(station)
+                                                                  .collection(
+                                                                      'Pump_Record')
+                                                                  .orderBy(
+                                                                      'Pump_Record_Id',
+                                                                      descending:
+                                                                          true)
+                                                                  .get()
+                                                                  .then(
+                                                                      (val) => {
+                                                                            if (val.docs.length >
+                                                                                0)
+                                                                              {
+                                                                                setState(() {
+                                                                                  lastRecordId = val.docs[0].get("Pump_Record_Id");
+                                                                                  print("last record iddddd$lastRecordId");
+                                                                                }),
+                                                                              }
+                                                                            else
+                                                                              {
+                                                                                print("elseeeee"),
+                                                                              }
+                                                                          });
+                                                            }).catchError(
+                                                                    (onError) {
+                                                              //alert error
+                                                              print('error');
+                                                            });
+                                                          },
                                                         )
                                                       : IconButton(
                                                           icon: const Icon(
@@ -616,70 +699,6 @@ class _PumpsState extends State<Pump_Records> {
                               );
                             }
                           }),
-                      // SingleChildScrollView(
-                      //     scrollDirection: Axis.horizontal,
-                      //     child: StreamBuilder(
-                      //       stream: db
-                      //           .collection('Stations')
-                      //           .doc(station)
-                      //           .collection('Pump_Record')
-                      //           .where('Pump_Id', isEqualTo: pumpID)
-                      //           .orderBy('Pump_Record_Id', descending: true)
-                      //           .snapshots(),
-                      //       builder: (context, snapshot) {
-                      //         if (!snapshot.hasData) {
-                      //           return LinearProgressIndicator();
-                      //         } else {
-                      //           DocumentSnapshot documentSnapshot =
-                      //               snapshot.data.docs;
-                      //
-                      //           return DataTable(
-                      //               columnSpacing: 35,
-                      //               columns: [
-                      //                 DataColumn(
-                      //                     label: Text(
-                      //                   "Date",
-                      //                   style: TextStyle(
-                      //                       fontSize: 16,
-                      //                       fontWeight: FontWeight.w800),
-                      //                 )),
-                      //                 DataColumn(
-                      //                   label: Text(
-                      //                     "Record",
-                      //                     style: TextStyle(
-                      //                         fontSize: 16,
-                      //                         fontWeight: FontWeight.w800),
-                      //                   ),
-                      //                 ),
-                      //                 DataColumn(
-                      //                   label: Text(
-                      //                     "Delete",
-                      //                     style: TextStyle(
-                      //                         fontSize: 16,
-                      //                         fontWeight: FontWeight.w800),
-                      //                   ),
-                      //                 ),
-                      //               ],
-                      //               //rows: const <DataRow>[
-                      //               //   DataRow(
-                      //               //     cells: <DataCell>[
-                      //               //       DataCell(Text('2021-03-03 21:43:01')),
-                      //               //       DataCell(Text('1000.00')),
-                      //               //       DataCell(Icon(Icons.delete,
-                      //               //           color: Colors.red, size: 20)),
-                      //               //     ],
-                      //               //   ),
-                      //               // ],
-                      //               rows: List<DataRow>.generate(
-                      //                 3,
-                      //                 (index) => DataRow(cells: [
-                      //                   DataCell(Text("fff")),
-                      //                   DataCell(Text("ffffffffff")),
-                      //                 ]),
-                      //               ));
-                      //         }
-                      //       },
-                      //     )),
                       SizedBox(height: 20),
                       Divider(
                         color: Colors.black,
@@ -695,63 +714,3 @@ class _PumpsState extends State<Pump_Records> {
     );
   }
 }
-
-List<DataRow> _buildList(
-    BuildContext context, List<DocumentSnapshot> snapshot) {
-  // var qs = FirebaseFirestore.instance
-  //     .collection('Stations')
-  //     .doc(station)
-  //     .collection('Pump_Record')
-  //     .orderBy("Record_Id")
-  //     .limitToLast(3)
-  //     .get();
-  return snapshot.map((data) => _buildListItem(context, data)).toList();
-}
-
-DataRow _buildListItem(BuildContext context, DocumentSnapshot data) {
-  return DataRow(cells: [
-    DataCell(Text(data.get('Record_Time'))),
-    DataCell(Text(data.get('Record'))),
-  ]);
-}
-
-class DTS extends DataTableSource {
-  var snapshot;
-
-  DTS(this.snapshot);
-
-  var snapshots = FirebaseFirestore.instance
-      .collection("Stations")
-      .doc(station)
-      .collection('Pump_Record')
-      .snapshots();
-
-  @override
-  DataRow getRow(int index) {
-    return DataRow.byIndex(index: index, cells: [
-      DataCell(Text(snapshot.data.docs[index + 1]['RecordTime'])),
-      DataCell(Text(DateTime.tryParse((snapshot.data.docs[index + 1]
-                  ["Record_Time"])
-              .toDate()
-              .toString())
-          .toString())),
-    ]);
-  }
-
-  @override
-  bool get isRowCountApproximate {
-    return true;
-  }
-
-  @override
-  int get rowCount {
-    return 100;
-  }
-
-  @override
-  int get selectedRowCount {
-    return 0;
-  }
-}
-
-// }

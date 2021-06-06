@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_petrol_station/Widgets/Drawer.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/services/cloud_services.dart';
 
 class Providers extends StatefulWidget {
+  static String id = 'Provider';
   @override
   _ProvidersState createState() => _ProvidersState();
 }
@@ -21,17 +24,42 @@ class _ProvidersState extends State<Providers> {
   int selected_provider_id;
   String selected_Phone;
 
-  bool isfilled=true;
+  bool isfilled = true;
 
-  bool add_privder_name_error=false;
+  bool add_privder_name_error = false;
 
-  bool add_privder_phone_error=false;
+  bool add_privder_phone_error = false;
+  String station, pStation;
+  User loggedInUser;
+
+  @override
+  void initState() {
+    super.initState();
+    loggedInUser = cloudServices.getCurrentUser();
+    print("user");
+    print(loggedInUser);
+    asyncMethod();
+  }
+
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+    }
+    setState(() {});
+    // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
+    // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
+  }
+
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
   void addProvider() async {
     // get the last prover id
     await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Provider')
         .orderBy('Provider_Id', descending: true)
         .get()
@@ -49,7 +77,7 @@ class _ProvidersState extends State<Providers> {
 
     FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Provider')
         .doc(new_provider_id.toString())
         .set({
@@ -66,9 +94,9 @@ class _ProvidersState extends State<Providers> {
       print('${selecting_provider}');
     });
     //get the provider id where provider_name=selecting_provider
-       await FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Provider')
         .where('Provider_Name', isEqualTo: selecting_provider)
         .get()
@@ -77,7 +105,6 @@ class _ProvidersState extends State<Providers> {
                 {
                   selected_provider_id = val.docs[0].get("Provider_Id"),
                   print("select provider has id : ${selected_provider_id}"),
-                  
                 }
               else
                 {print("Not Found")}
@@ -85,7 +112,7 @@ class _ProvidersState extends State<Providers> {
     //get the phone number where providername=newValue
     await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Provider')
         .where('Provider_Id', isEqualTo: selected_provider_id)
         .get()
@@ -94,35 +121,28 @@ class _ProvidersState extends State<Providers> {
                 {
                   selected_Phone = val.docs[0].get("Provider_Phone"),
                   print("select provider has phone number : ${selected_Phone}"),
-                  
-                    setState(() {
-                        isfilled=false;
-                        
-                    }),
-                        t3.text=selecting_provider,
-                        t4.text=selected_Phone,
-                        
-
+                  setState(() {
+                    isfilled = false;
+                  }),
+                  t3.text = selecting_provider,
+                  t4.text = selected_Phone,
                 }
               else
                 {print("Not Found")}
             });
+  }
 
-     }
-     void update_provider() async {
-
-         FirebaseFirestore.instance
+  void update_provider() async {
+    FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Provider')
         .doc('${selected_provider_id}')
-        .update({'Provider_Name':t3.text,'Provider_Phone':t4.text});
-      print('Provider updated');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (BuildContext context) => super.widget));
-     }
+        .update({'Provider_Name': t3.text, 'Provider_Phone': t4.text});
+    print('Provider updated');
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (BuildContext context) => super.widget));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +269,7 @@ class _ProvidersState extends State<Providers> {
                           StreamBuilder(
                               stream: FirebaseFirestore.instance
                                   .collection('Stations')
-                                  .doc('Petrol Station 1')
+                                  .doc(station)
                                   .collection('Provider')
                                   .snapshots(),
                               builder: (context,
@@ -332,7 +352,7 @@ class _ProvidersState extends State<Providers> {
                           SizedBox(height: 10),
                           TextFormField(
                               controller: t3,
-                             // enableInteractiveSelection: false,
+                              // enableInteractiveSelection: false,
                               focusNode: FocusNode(),
                               //readOnly: true,
                               style: TextStyle(color: Colors.black),
@@ -357,7 +377,7 @@ class _ProvidersState extends State<Providers> {
                           SizedBox(height: 10),
                           TextFormField(
                               controller: t4,
-                             // enableInteractiveSelection: false,
+                              // enableInteractiveSelection: false,
                               focusNode: FocusNode(),
                               //readOnly: true,
                               style: TextStyle(color: Colors.black),
@@ -394,7 +414,9 @@ class _ProvidersState extends State<Providers> {
                                         style: TextStyle(
                                             color: Colors.white, fontSize: 25)),
                                   ]),
-                              onPressed: () {update_provider();},
+                              onPressed: () {
+                                update_provider();
+                              },
                             ),
                           ),
                         ]))

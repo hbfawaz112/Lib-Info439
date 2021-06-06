@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_petrol_station/Widgets/Drawer.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/services/cloud_services.dart';
 
 class Container_Details extends StatefulWidget {
+  static String idd = "Container_Details";
   String name;
   int id;
   Container_Details(this.id, this.name);
@@ -13,58 +16,68 @@ class Container_Details extends StatefulWidget {
 }
 
 class _Container_DetailsState extends State<Container_Details> {
+  static String idd = "Container_Detail";
+  int id;
+  TextEditingController t1 = new TextEditingController();
+  int volume;
+  int newvolume;
+  String station;
+  User loggedInUser;
+  FirebaseFirestore db = FirebaseFirestore.instance;
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
-      int id;
-      TextEditingController t1 = new TextEditingController();
-      int volume;
-      int newvolume;
-      int max_volume_error=-1;
-    @override
+  @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    id=widget.id;
-    print('the id id ${id}');
-    
+    loggedInUser = cloudServices.getCurrentUser();
+    asyncMethod();
+    print("inittt");
+    print(station);
+    // future that allows us to access context. function is called inside the future
+    // otherwise it would be skipped and args would return null
+    //getContainerInfo(widget.pumpID);
+    //print(station);
   }
-    void update_volume() async{
 
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
+    if (loggedInUser != null) {
+      station = await cloudServices.getUserStation(loggedInUser);
+    }
 
+    setState(() {});
+    // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
+    // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
+  }
 
-      //get the volume of specific container id;
-      var s = await FirebaseFirestore.instance
+  void update_volume() async {
+    //get the volume of specific container id;
+    var s = await FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Container')
         .where('Container_Id', isEqualTo: id)
         .get()
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                 
                   volume = val.docs[0].get("Volume"),
                   print('Current volume is ${volume}')
                 }
               else
                 {print("Not Found")}
             });
-        if(int.parse(t1.text)>volume){
-              setState(() {
-                max_volume_error=1;
-              });
-        }else{
-           setState(() {
-                max_volume_error=-1;
-              });
-      newvolume = volume - int.parse(t1.text);
-       FirebaseFirestore.instance
+
+    newvolume = volume - int.parse(t1.text);
+    FirebaseFirestore.instance
         .collection('Stations')
-        .doc('Petrol Station 1')
+        .doc(station)
         .collection('Container')
         .doc('${id}')
-        .update({'Volume':newvolume});
-        }
-    }
+        .update({'Volume': newvolume});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +121,7 @@ class _Container_DetailsState extends State<Container_Details> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
-                            keyboardType: TextInputType.number,
-                            controller: t1,
+                              controller: t1,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
                                   enabledBorder: const OutlineInputBorder(
@@ -125,7 +137,6 @@ class _Container_DetailsState extends State<Container_Details> {
                                           width: 2.0))),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
-                          Text(max_volume_error==1?'You must select a volume with maximum value ${volume}':'',style: TextStyle(color: Colors.red,fontSize: 22.0)),
                           Divider(color: Colors.black38),
                           Divider(color: Colors.black38),
                           SizedBox(height: 15),
@@ -147,7 +158,9 @@ class _Container_DetailsState extends State<Container_Details> {
                                         style: TextStyle(
                                             color: Colors.white, fontSize: 25)),
                                   ]),
-                              onPressed: () {update_volume();},
+                              onPressed: () {
+                                update_volume();
+                              },
                             ),
                           ),
                         ]))
@@ -173,48 +186,48 @@ class _Container_DetailsState extends State<Container_Details> {
             child: Padding(
               padding: const EdgeInsets.all(15.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                Text('Container ${widget.name} ',
-                    style: TextStyle(
-                        color: Colors.indigo[900],
-                        fontSize: 37,
-                        fontWeight: FontWeight.w900)),
-                SizedBox(height: 20),
-                StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc('Petrol Station 1')
-                        .collection('Container')
-                        .where('Container_Id', isEqualTo: widget.id)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                         DocumentSnapshot documentSnapshot = snapshot.data.docs[0];
-                        return  Expanded(
-                                    
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left:28),
-                                      child: LinearPercentIndicator(
-                                  width:
-                                        MediaQuery.of(context).size.width - 110,
-                                  animation: true,
-                                  lineHeight: 20.0,
-                                  animationDuration: 2500,
-                                  percent: documentSnapshot['Volume']/documentSnapshot['Capacity'],
-                                  center: Text(
-                                      '${documentSnapshot['Volume']} L',
-                                      style: TextStyle(fontSize: 20.0),
-                                  ),
-                                  linearStrokeCap: LinearStrokeCap.roundAll,
-                                  progressColor: Colors.green,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Container ${widget.name} ',
+                        style: TextStyle(
+                            color: Colors.indigo[900],
+                            fontSize: 37,
+                            fontWeight: FontWeight.w900)),
+                    SizedBox(height: 20),
+                    StreamBuilder(
+                        stream: FirebaseFirestore.instance
+                            .collection('Stations')
+                            .doc(station)
+                            .collection('Container')
+                            .where('Container_Id', isEqualTo: widget.id)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            DocumentSnapshot documentSnapshot =
+                                snapshot.data.docs[0];
+                            return Expanded(
+                                child: Padding(
+                              padding: const EdgeInsets.only(left: 28),
+                              child: LinearPercentIndicator(
+                                width: MediaQuery.of(context).size.width - 110,
+                                animation: true,
+                                lineHeight: 20.0,
+                                animationDuration: 2500,
+                                percent: documentSnapshot['Volume'] /
+                                    documentSnapshot['Capacity'],
+                                center: Text(
+                                  '${documentSnapshot['Volume']} L',
+                                  style: TextStyle(fontSize: 20.0),
                                 ),
-                                    ));
-                      } else {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                    }),
-              ]),
+                                linearStrokeCap: LinearStrokeCap.roundAll,
+                                progressColor: Colors.green,
+                              ),
+                            ));
+                          } else {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                        }),
+                  ]),
             ),
           ),
         ]));
