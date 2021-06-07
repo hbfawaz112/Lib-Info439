@@ -27,6 +27,10 @@ class _VoucherState extends State<Voucher> {
   String station, pStation;
   User loggedInUser;
 
+
+  String fuel_category;
+  String customer_category;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +39,7 @@ class _VoucherState extends State<Voucher> {
     print("user");
     print(loggedInUser);
     asyncMethod();
+   // setState(() {});
   }
 
   void asyncMethod() async {
@@ -42,6 +47,7 @@ class _VoucherState extends State<Voucher> {
     // when aiming to use the fct in initState
     if (loggedInUser != null) {
       station = await cloudServices.getUserStation(loggedInUser);
+      getFirstCategory();
     }
     setState(() {});
     // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
@@ -51,13 +57,55 @@ class _VoucherState extends State<Voucher> {
   CloudServices cloudServices =
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
+
+   void getFirstCategory() async{
+     print('oki');
+     var s = await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc(station)
+        .collection('Customer')
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                 //t = val.docs[0].get("Container_Name"),
+                  customer_category = val.docs[0].get("Customer_Name"),
+                //  container_id = val.docs[0].get("Container_Id"),
+                //  container_category_details = container_category,
+                //  print("container id fct firsttt: $container_id"),
+                  print("Customer Name  firsttt $customer_category"),
+                }
+              else
+                {print("Not Founddd1111")}
+            });
+
+       await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc(station)
+        .collection('Fuel_Type')
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                 // t = val.docs[0].get("Fuel_Type_Name"),
+                  fuel_category = val.docs[0].get("Fuel_Type_Name"),
+                //  fuel_type_id = val.docs[0].get("Fuel_Type_Id"),
+                 // print("fuel id fct firsttt: $fuel_type_id"),
+                  print("fuel name firsttt $fuel_category"),
+                }
+              else
+                {print("Not Founddd22222")}
+            });
+
+   }
+
   void Add_Voucher() async {
     //get the fueul_type_id of the selected fuel type
     await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Fuel_Type')
-        .where('Fuel_Type_Name', isEqualTo: fuel_type)
+        .where('Fuel_Type_Name', isEqualTo: fuel_category)
         .get()
         .then((val) => {
               if (val.docs.length > 0)
@@ -76,7 +124,7 @@ class _VoucherState extends State<Voucher> {
         .collection('Stations')
         .doc(station)
         .collection('Customer')
-        .where('Customer_Name', isEqualTo: customer_name)
+        .where('Customer_Name', isEqualTo: customer_category)
         .get()
         .then((val) => {
               if (val.docs.length > 0)
@@ -130,6 +178,7 @@ class _VoucherState extends State<Voucher> {
 
   @override
   Widget build(BuildContext context) {
+    //getFirstCategory();
     return Scaffold(
         backgroundColor: Colors.indigo[50],
         appBar: AppBar(
@@ -176,43 +225,41 @@ class _VoucherState extends State<Voucher> {
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         StreamBuilder(
-                            stream: FirebaseFirestore.instance
-                                .collection('Stations')
-                                .doc(station)
-                                .collection('Fuel_Type')
-                                .snapshots(),
-                            builder: (context,
-                                AsyncSnapshot<QuerySnapshot> snapshot) {
-                              if (!snapshot.hasData)
-                                Center(
-                                  child: const CupertinoActivityIndicator(),
-                                );
-
+                          stream: FirebaseFirestore.instance
+                              .collection('Stations')
+                              .doc(station)
+                              .collection('Fuel_Type')
+                              .snapshots(),
+                          builder:
+                              (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if (snapshot.hasData) {
                               return Container(
-                                  width: 350.0,
-                                  height: 58,
-                                  decoration: ShapeDecoration(
-                                    shape: RoundedRectangleBorder(
-                                      side: BorderSide(
-                                          width: 1.0, style: BorderStyle.solid),
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(5.0)),
-                                    ),
+                                width: 350.0,
+                                height: 58,
+                                decoration: ShapeDecoration(
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        width: 1.0, style: BorderStyle.solid),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15.0)),
                                   ),
+                                ),
+                                child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     isExpanded: true,
+                                    value: fuel_category,
                                     icon: const Icon(Icons.arrow_drop_down),
                                     iconSize: 24,
                                     elevation: 16,
-                                    style:
-                                        const TextStyle(color: Colors.black45),
-
-                                    value: fuel_type,
-                                    //isDense: true,
-                                    hint: Text('Fuel Type'),
-                                    onChanged: (newValue) {
+                                    style: const TextStyle(
+                                        color: Colors.deepPurple),
+                                    underline: Container(
+                                      height: 2,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                                    onChanged: (String newValue) {
                                       setState(() {
-                                        fuel_type = newValue;
+                                        fuel_category = newValue;
                                       });
                                     },
                                     items: snapshot.data != null
@@ -223,14 +270,7 @@ class _VoucherState extends State<Voucher> {
                                                     .get('Fuel_Type_Name')
                                                     .toString(),
                                                 child: new Container(
-                                                  // height: 20.0,
-
-                                                  //color: primaryColor,
-
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 7, left: 8),
+                                                  child: Center(
                                                     child: new Text(
                                                       document
                                                           .get('Fuel_Type_Name')
@@ -238,7 +278,7 @@ class _VoucherState extends State<Voucher> {
                                                       style: TextStyle(
                                                           fontSize: 20,
                                                           fontWeight:
-                                                              FontWeight.w900),
+                                                              FontWeight.w400),
                                                     ),
                                                   ),
                                                 ));
@@ -250,8 +290,14 @@ class _VoucherState extends State<Voucher> {
                                               child: new Text('null'),
                                             ),
                                           ),
-                                  ));
-                            }),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return Text('');
+                            }
+                          },
+                        ),
                         SizedBox(height: 15),
                         Text("Voucher Value (L.L)",
                             style:
@@ -284,44 +330,42 @@ class _VoucherState extends State<Voucher> {
                             style:
                                 TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
-                        StreamBuilder(
-                            stream: FirebaseFirestore.instance
-                                .collection('Stations')
-                                .doc(station)
-                                .collection('Customer')
-                                .snapshots(),
-                            builder: (context,
-                                AsyncSnapshot<QuerySnapshot> snapshot) {
-                              if (!snapshot.hasData)
-                                Center(
-                                  child: const CupertinoActivityIndicator(),
-                                );
-
+                      StreamBuilder(
+                          stream: FirebaseFirestore.instance
+                              .collection('Stations')
+                              .doc(station)
+                              .collection('Customer')
+                              .snapshots(),
+                          builder:
+                              (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if (snapshot.hasData) {
                               return Container(
-                                  width: 350.0,
-                                  height: 58,
-                                  decoration: ShapeDecoration(
-                                    shape: RoundedRectangleBorder(
-                                      side: BorderSide(
-                                          width: 1.0, style: BorderStyle.solid),
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(5.0)),
-                                    ),
+                                width: 350.0,
+                                height: 58,
+                                decoration: ShapeDecoration(
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        width: 1.0, style: BorderStyle.solid),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15.0)),
                                   ),
+                                ),
+                                child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     isExpanded: true,
+                                    value: customer_category,
                                     icon: const Icon(Icons.arrow_drop_down),
                                     iconSize: 24,
                                     elevation: 16,
-                                    style:
-                                        const TextStyle(color: Colors.black45),
-
-                                    value: customer_name,
-                                    //isDense: true,
-                                    hint: Text('Customer Name'),
-                                    onChanged: (newValue) {
+                                    style: const TextStyle(
+                                        color: Colors.deepPurple),
+                                    underline: Container(
+                                      height: 2,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                                    onChanged: (String newValue) {
                                       setState(() {
-                                        customer_name = newValue;
+                                        customer_category = newValue;
                                       });
                                     },
                                     items: snapshot.data != null
@@ -332,14 +376,7 @@ class _VoucherState extends State<Voucher> {
                                                     .get('Customer_Name')
                                                     .toString(),
                                                 child: new Container(
-                                                  // height: 20.0,
-
-                                                  //color: primaryColor,
-
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 7, left: 8),
+                                                  child: Center(
                                                     child: new Text(
                                                       document
                                                           .get('Customer_Name')
@@ -347,7 +384,7 @@ class _VoucherState extends State<Voucher> {
                                                       style: TextStyle(
                                                           fontSize: 20,
                                                           fontWeight:
-                                                              FontWeight.w900),
+                                                              FontWeight.w400),
                                                     ),
                                                   ),
                                                 ));
@@ -359,8 +396,14 @@ class _VoucherState extends State<Voucher> {
                                               child: new Text('null'),
                                             ),
                                           ),
-                                  ));
-                            }),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return Text('');
+                            }
+                          },
+                        ),
                         SizedBox(height: 20),
                         Text("Voucher Date",
                             style:
