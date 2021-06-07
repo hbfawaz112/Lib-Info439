@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_petrol_station/Screens/Fuel_Type.dart';
+import 'package:flutter_petrol_station/models/Fuel_Type.dart';
 import 'package:flutter_petrol_station/screens/Add_Container.dart';
 import 'package:flutter_petrol_station/screens/dashboard_firstore.dart';
 import 'package:flutter_petrol_station/screens/shipments.dart';
@@ -11,6 +13,7 @@ import 'package:flutter_petrol_station/screens/Voucher.dart';
 import 'package:flutter_petrol_station/screens/Add_Fuel_Type.dart';
 import 'package:flutter_petrol_station/screens/Provider.dart';
 import 'package:flutter_petrol_station/screens/Container_Detail.dart';
+import 'package:flutter_petrol_station/Screens/Fuel_Type.dart';
 
 class getDrawer extends StatefulWidget {
   @override
@@ -206,7 +209,17 @@ class _getDrawerState extends State<getDrawer> {
                           DocumentSnapshot documentSnapshot =
                               snapshot.data.docs[index];
                           return InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => FuelInfo(
+                                          FuelTypeId:
+                                              documentSnapshot["Fuel_Type_Id"],
+                                          FuelTypeName: documentSnapshot[
+                                              "Fuel_Type_Name"])),
+                                );
+                              },
                               child: Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
