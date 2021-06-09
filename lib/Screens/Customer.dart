@@ -1144,8 +1144,7 @@ class datatable extends StatelessWidget {
   datatable(List list) {
     this.list = list;
   }
-
-  @override
+@override
   Widget build(BuildContext context) {
     return Expanded(
         child: SingleChildScrollView(
@@ -1158,7 +1157,6 @@ class datatable extends StatelessWidget {
             DataColumn(label: Text("Value",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
             DataColumn(label: Text("Date",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
             DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
-           
             ],
             rows:list.map((transaction) => DataRow(
               cells:[
@@ -1166,15 +1164,17 @@ class datatable extends StatelessWidget {
                    Text('${transaction["Transaction_Value"]}'),
                 ),
                 DataCell(
-                  
                    Text('${ DateTime.tryParse( (transaction["Transaction_Date"]).toDate().toString())}'),
                 ),
                 DataCell(
-                   Text('Delete'),
+                   IconButton(
+                                                          icon: const Icon(
+                                                              Icons.delete),
+                                                          color: Colors.red,
+                                                          onPressed: () {},
+                                                        ),
                 ),
-                
               ] 
-              
               )).toList(),
 
               )
