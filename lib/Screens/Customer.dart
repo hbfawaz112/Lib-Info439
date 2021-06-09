@@ -16,6 +16,7 @@ class _CutomersState extends State<Cutomers> {
 
   int last_doc_id;
 
+ 
   //too : defin contorller
   TextEditingController t1 = new TextEditingController();
   TextEditingController t2 = new TextEditingController();
@@ -1019,7 +1020,7 @@ class _CutomersState extends State<Cutomers> {
                                                 builder: (context, snapshot) {
                                                   return snapshot.hasData
                                                       ? new datatable(
-                                                          snapshot.data)
+                                                          snapshot.data.docs)
                                                       : Text('No data');
                                                 },
                                               ),
@@ -1159,7 +1160,23 @@ class datatable extends StatelessWidget {
             DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
            
             ],
-            
+            rows:list.map((transaction) => DataRow(
+              cells:[
+                DataCell(
+                   Text('${transaction["Transaction_Value"]}'),
+                ),
+                DataCell(
+                  
+                   Text('${ DateTime.tryParse( (transaction["Transaction_Date"]).toDate().toString())}'),
+                ),
+                DataCell(
+                   Text('Delete'),
+                ),
+                
+              ] 
+              
+              )).toList(),
+
               )
             )));
   }
