@@ -36,10 +36,13 @@ class _PumpsState extends State<Pump_Records> {
   int containerID;
   String containerName;
   int previousCounter, newCounter, lastRecordId;
+  int counterToDelete, counterBeforeDelete, volumeToBeAdded;
   DateTime lastUpdate;
   int recordError = 0;
-  Color colorR = Colors.blueAccent;
+  int oldVolume, negativeVolume, distractedContVolume, oldVol, newVol;
+  Color colorR = Colors.blueAccent, colorT = Colors.blueAccent;
   var msgController = TextEditingController();
+
   final now = new DateTime.now();
   DateTime dateToday =
       DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
@@ -62,6 +65,8 @@ class _PumpsState extends State<Pump_Records> {
     asyncMethod();
     print("inittt");
     print(station);
+    getPumpRecord();
+    getContainerOldVolume();
     // future that allows us to access context. function is called inside the future
     // otherwise it would be skipped and args would return null
     //getContainerInfo(widget.pumpID);
@@ -177,6 +182,7 @@ class _PumpsState extends State<Pump_Records> {
                   //     lastRecordId = val.docs[0].get("Pump_Record_Id");
                   //     print("last record iddddd$lastRecordId");
                   //   }),
+
                   previousCounter = val.docs[0].get("Record"),
                   print(previousCounter),
                   lastUpdate = DateTime.tryParse(
@@ -192,6 +198,26 @@ class _PumpsState extends State<Pump_Records> {
                 }
             });
     setState(() {});
+  }
+
+  void getContainerOldVolume() {
+    db
+        .collection('Stations')
+        .doc(station)
+        .collection('Container')
+        .where('Container_Id', isEqualTo: containerID)
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  oldVolume = val.docs[0].get("Volume"),
+                  print('volumeeeeeeeeee $oldVolume'),
+                }
+              else
+                {
+                  print("elseeeee"),
+                }
+            });
   }
 
   //     .snapshots();
@@ -355,7 +381,7 @@ class _PumpsState extends State<Pump_Records> {
                           }),
                       Text(
                         recordError == 1
-                            ? 'Enter value positive value greater than $previousCounter'
+                            ? 'Enter value positive value greater than $previousCounter and less than current container volume $oldVolume'
                             : '',
                         style: TextStyle(color: colorR),
                       ),
@@ -444,23 +470,63 @@ class _PumpsState extends State<Pump_Records> {
                       onPressed: () {
                         DateTime d = DateTime.now();
                         Timestamp myTimeStamp = Timestamp.fromDate(d);
+
                         if (newCounter == null) {
                           setState(() {
                             recordError = 1;
                             colorR = Colors.red;
                           });
                         } else {
+                          if (newCounter - previousCounter > oldVolume) {
+                            setState(() {
+                              recordError = 1;
+                              colorR = Colors.red;
+                            });
+                          }
                           if (newCounter < 0 || newCounter < previousCounter) {
                             setState(() {
                               recordError = 1;
                               colorR = Colors.red;
                             });
                           } else {
-                            if (newCounter != null) {
+                            db
+                                .collection('Stations')
+                                .doc(station)
+                                .collection('Pump_Record')
+                                .where('Pump_Id', isEqualTo: pumpID)
+                                .orderBy('Pump_Record_Id', descending: true)
+                                .get()
+                                .then((val) => {
+                                      if (val.docs.length > 0)
+                                        {
+                                          previousCounter =
+                                              val.docs[0].get("Record"),
+                                          lastUpdate = DateTime.tryParse(
+                                              (val.docs[0].get("Record_Time"))
+                                                  .toDate()
+                                                  .toString()),
+                                        }
+                                      else
+                                        {
+                                          print("elseeeee"),
+                                        }
+                                    });
+
+                            if (newCounter != null &&
+                                newCounter > previousCounter &&
+                                newCounter - previousCounter < oldVolume) {
                               setState(() {
                                 recordError = 0;
                                 colorR = Colors.blueAccent;
                               });
+
+                              print('newwwwwwww counterrrrrrr $newCounter');
+                              print(
+                                  'previoussssss counterrrrrrrr $previousCounter');
+                              distractedContVolume =
+                                  newCounter - previousCounter;
+                              print(
+                                  'distracteddddddddddddd $distractedContVolume');
                               int docId = lastRecordId + 1;
                               db
                                   .collection("Stations")
@@ -474,20 +540,105 @@ class _PumpsState extends State<Pump_Records> {
                                 'Record': newCounter,
                                 'Record_Time': myTimeStamp,
                                 'X_Id': myTimeStamp
+                              }).then((value) {
+                                db
+                                    .collection('Stations')
+                                    .doc(station)
+                                    .collection('Container')
+                                    .where('Container_Id',
+                                        isEqualTo: containerID)
+                                    .get()
+                                    .then((val) => {
+                                          if (val.docs.length > 0)
+                                            {
+                                              //setState(() {
+                                              oldVolume =
+                                                  val.docs[0].get("Volume"),
+                                              //}),
+                                              print(
+                                                  'volumeeeeeeeeee $oldVolume'),
+                                            }
+                                          else
+                                            {
+                                              print("elseeeee"),
+                                            }
+                                        });
+                                int newV = oldVolume - distractedContVolume;
+                                print('newwwwwwwwVVVVVVVVVVVv$newV');
+                                print(
+                                    'plddddddddddddddddddVolumeeeeeeeeeee$oldVolume');
+                                db
+                                    .collection('Stations')
+                                    .doc(station)
+                                    .collection('Container')
+                                    .doc(containerID.toString())
+                                    .update({"Volume": newV}).then((value) {
+                                  setState(() {
+                                    //previousCounter = newCounter;
+                                    //lastUpdate = DateTime.tryParse(
+                                    //(myTimeStamp).toDate().toString());
+                                    //previousCounter = newCounter;
+                                    //lastUpdate = DateTime.now();
+                                    //  distractedContVolume = 0;
+                                    db
+                                        .collection('Stations')
+                                        .doc(station)
+                                        .collection('Pump_Record')
+                                        .where('Pump_Id', isEqualTo: pumpID)
+                                        .orderBy('Pump_Record_Id',
+                                            descending: true)
+                                        .get()
+                                        .then((val) => {
+                                              if (val.docs.length > 0)
+                                                {
+                                                  previousCounter =
+                                                      val.docs[0].get("Record"),
+                                                  lastUpdate = DateTime.tryParse(
+                                                      (val.docs[0].get(
+                                                              "Record_Time"))
+                                                          .toDate()
+                                                          .toString()),
+                                                }
+                                              else
+                                                {
+                                                  print("elseeeee"),
+                                                }
+                                            });
+                                    // db
+                                    //     .collection('Stations')
+                                    //     .doc(station)
+                                    //     .collection('Container')
+                                    //     .where('Container_Id',
+                                    //         isEqualTo: containerID)
+                                    //     .get()
+                                    //     .then((val) => {
+                                    //           if (val.docs.length > 0)
+                                    //             {
+                                    //               oldVolume =
+                                    //                   val.docs[0].get("Volume"),
+                                    //               print(
+                                    //                   'volumeeeeeeeeee $oldVolume'),
+                                    //             }
+                                    //           else
+                                    //             {
+                                    //               print("elseeeee"),
+                                    //             }
+                                    //         });
+                                    // setState(() {
+                                    //   counterBeforeDelete = 0;
+                                    //   counterToDelete = 0;
+                                    //   volumeToBeAdded = 0;
+                                    // });
+
+                                    newCounter = null;
+                                  });
+                                  msgController.clear();
+                                }).catchError((onError) {});
                               });
-                              setState(() {
-                                //previousCounter = newCounter;
-                                //lastUpdate = DateTime.tryParse(
-                                //(myTimeStamp).toDate().toString());
-                                previousCounter = newCounter;
-                                lastUpdate = DateTime.now();
-                                newCounter = null;
-                              });
-                              msgController.clear();
                             }
                           }
                         }
-                        setState(() {});
+                        //setState(() {});
                       },
                     ),
                   ),
@@ -523,7 +674,7 @@ class _PumpsState extends State<Pump_Records> {
                               color: Colors.blue.shade100,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: colorR),
+                              borderSide: BorderSide(color: colorT),
                               borderRadius:
                                   BorderRadius.all(Radius.circular(32.0)),
                             ),
@@ -570,6 +721,12 @@ class _PumpsState extends State<Pump_Records> {
                                         int length = snapshot.data.docs.length;
                                         DocumentSnapshot documentSnapshot =
                                             snapshot.data.docs[index];
+                                        // if (index == 1) {
+                                        //   //setState(() {
+                                        //   counterBeforeDelete =
+                                        //       documentSnapshot['Record'];
+                                        //   //  });
+                                        // }
                                         return Column(
                                           children: [
                                             Row(
@@ -604,79 +761,220 @@ class _PumpsState extends State<Pump_Records> {
                                                                     'Pump_Record_Id'];
                                                             String docId = docID
                                                                 .toString();
-                                                            db
-                                                                .collection(
-                                                                    'Stations')
-                                                                .doc(station)
-                                                                .collection(
-                                                                    'Pump_Record')
-                                                                .doc(docId)
-                                                                .delete()
-                                                                .then((value) {
-                                                              db
-                                                                  .collection(
-                                                                      'Stations')
-                                                                  .doc(station)
-                                                                  .collection(
-                                                                      'Pump_Record')
-                                                                  .where(
-                                                                      'Pump_Id',
-                                                                      isEqualTo:
-                                                                          pumpID)
-                                                                  .orderBy(
-                                                                      'Pump_Record_Id',
-                                                                      descending:
-                                                                          true)
-                                                                  .get()
-                                                                  .then(
-                                                                      (val) => {
-                                                                            if (val.docs.length >
-                                                                                0)
-                                                                              {
-                                                                                setState(() {
-                                                                                  previousCounter = val.docs[0].get("Record");
 
-                                                                                  lastUpdate = DateTime.tryParse((val.docs[0].get("Record_Time")).toDate().toString());
-                                                                                }),
-                                                                                print(previousCounter),
-                                                                                print(lastUpdate),
-                                                                              }
-                                                                            else
+                                                            //setState(() {
+                                                            showDialog<String>(
+                                                              context: context,
+                                                              builder: (BuildContext
+                                                                      context) =>
+                                                                  AlertDialog(
+                                                                title: const Text(
+                                                                    'DELETE !!!',
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .red)),
+                                                                content: const Text(
+                                                                    'Are you sure you want to delete ???'),
+                                                                actions: <
+                                                                    Widget>[
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context,
+                                                                          'Cancel');
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Cancel',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.red),
+                                                                    ),
+                                                                  ),
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      DocumentSnapshot
+                                                                          documentSnapshot1 =
+                                                                          snapshot
+                                                                              .data
+                                                                              .docs[1];
+                                                                      counterBeforeDelete =
+                                                                          documentSnapshot1[
+                                                                              'Record'];
+                                                                      counterToDelete =
+                                                                          documentSnapshot[
+                                                                              'Record'];
+
+                                                                      volumeToBeAdded =
+                                                                          counterToDelete -
+                                                                              counterBeforeDelete;
+
+                                                                      // setState(() {
+
+                                                                      //});
+                                                                      db
+                                                                          .collection(
+                                                                              'Stations')
+                                                                          .doc(
+                                                                              station)
+                                                                          .collection(
+                                                                              'Container')
+                                                                          .where(
+                                                                              'Container_Id',
+                                                                              isEqualTo:
+                                                                                  containerID)
+                                                                          .get()
+                                                                          .then((val) =>
                                                                               {
-                                                                                print("elseeeee"),
-                                                                              }
-                                                                          });
-                                                              db
-                                                                  .collection(
-                                                                      'Stations')
-                                                                  .doc(station)
-                                                                  .collection(
-                                                                      'Pump_Record')
-                                                                  .orderBy(
-                                                                      'Pump_Record_Id',
-                                                                      descending:
-                                                                          true)
-                                                                  .get()
-                                                                  .then(
-                                                                      (val) => {
-                                                                            if (val.docs.length >
-                                                                                0)
-                                                                              {
-                                                                                setState(() {
-                                                                                  lastRecordId = val.docs[0].get("Pump_Record_Id");
-                                                                                  print("last record iddddd$lastRecordId");
-                                                                                }),
-                                                                              }
-                                                                            else
-                                                                              {
-                                                                                print("elseeeee"),
-                                                                              }
-                                                                          });
-                                                            }).catchError(
-                                                                    (onError) {
-                                                              //alert error
-                                                              print('error');
-                                                            });
+                                                                                if (val.docs.length > 0)
+                                                                                  {
+                                                                                    // setState(() {
+                                                                                    oldVol = val.docs[0].get("Volume"),
+                                                                                    newVol = oldVol + volumeToBeAdded,
+                                                                                    //}),
+                                                                                    print('oldddddddvollll $oldVol'),
+                                                                                  }
+                                                                                else
+                                                                                  {
+                                                                                    print("elseeeee"),
+                                                                                  }
+                                                                              });
+                                                                      //});
+                                                                      print(
+                                                                          'previoussssssss $counterBeforeDelete');
+                                                                      print(
+                                                                          'deleteeeeeeeee $counterToDelete');
+
+                                                                      //setState(() {
+
+                                                                      print(
+                                                                          'olddddd vollllll $oldVol');
+
+                                                                      print(
+                                                                          'newwwwwwww vollllll $newVol');
+                                                                      //  });
+                                                                      print(
+                                                                          'volumeeeeee $volumeToBeAdded');
+
+                                                                      db
+                                                                          .collection(
+                                                                              'Stations')
+                                                                          .doc(
+                                                                              station)
+                                                                          .collection(
+                                                                              'Pump_Record')
+                                                                          .doc(
+                                                                              docId)
+                                                                          .delete()
+                                                                          .then(
+                                                                              (value) {
+                                                                        db
+                                                                            .collection(
+                                                                                'Stations')
+                                                                            .doc(
+                                                                                station)
+                                                                            .collection(
+                                                                                'Container')
+                                                                            .doc(containerID
+                                                                                .toString())
+                                                                            .update({
+                                                                          "Volume":
+                                                                              newVol
+                                                                        }).then((value) {
+                                                                          db
+                                                                              .collection('Stations')
+                                                                              .doc(station)
+                                                                              .collection('Pump_Record')
+                                                                              .where('Pump_Id', isEqualTo: pumpID)
+                                                                              .orderBy('Pump_Record_Id', descending: true)
+                                                                              .get()
+                                                                              .then((val) => {
+                                                                                    if (val.docs.length > 0)
+                                                                                      {
+                                                                                        setState(() {
+                                                                                          previousCounter = val.docs[0].get("Record");
+
+                                                                                          lastUpdate = DateTime.tryParse((val.docs[0].get("Record_Time")).toDate().toString());
+                                                                                        }),
+                                                                                        print(previousCounter),
+                                                                                        print(lastUpdate),
+                                                                                      }
+                                                                                    else
+                                                                                      {
+                                                                                        print("elseeeee"),
+                                                                                      },
+                                                                                  });
+                                                                        });
+                                                                        db
+                                                                            .collection(
+                                                                                'Stations')
+                                                                            .doc(
+                                                                                station)
+                                                                            .collection(
+                                                                                'Pump_Record')
+                                                                            .orderBy('Pump_Record_Id',
+                                                                                descending: true)
+                                                                            .get()
+                                                                            .then((val) => {
+                                                                                  if (val.docs.length > 0)
+                                                                                    {
+                                                                                      setState(() {
+                                                                                        lastRecordId = val.docs[0].get("Pump_Record_Id");
+                                                                                        print("last record iddddd$lastRecordId");
+                                                                                      }),
+                                                                                    }
+                                                                                  else
+                                                                                    {
+                                                                                      print("elseeeee"),
+                                                                                    }
+                                                                                });
+                                                                        db
+                                                                            .collection(
+                                                                                'Stations')
+                                                                            .doc(
+                                                                                station)
+                                                                            .collection(
+                                                                                'Container')
+                                                                            .where('Container_Id',
+                                                                                isEqualTo: containerID)
+                                                                            .get()
+                                                                            .then((val) => {
+                                                                                  if (val.docs.length > 0)
+                                                                                    {
+                                                                                      //setState(() {
+                                                                                      oldVolume = val.docs[0].get("Volume"),
+                                                                                      //}),
+                                                                                      print('volumeeeeeeeeee $oldVolume'),
+                                                                                    }
+                                                                                  else
+                                                                                    {
+                                                                                      print("elseeeee"),
+                                                                                    }
+                                                                                });
+
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            'OK');
+                                                                      }).catchError(
+                                                                              (onError) {
+                                                                        //alert error
+                                                                        print(
+                                                                            'error');
+                                                                      });
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'OK',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.green),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
                                                           },
                                                         )
                                                       : IconButton(
