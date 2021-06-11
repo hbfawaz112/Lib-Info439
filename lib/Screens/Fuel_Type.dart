@@ -37,6 +37,7 @@ class _FuelInfoState extends State<FuelInfo> {
       msgController1 = TextEditingController();
   bool enable = false, readOnlyOption = true;
   int priceLastID, profitLastID, profitDocId, priceDocId;
+  int priceprofitid;
   int profitError = 0, priceError = 0;
   Color profitColor = Colors.blueAccent, priceColor = Colors.blueAccent;
   @override
@@ -66,42 +67,22 @@ class _FuelInfoState extends State<FuelInfo> {
     // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
   }
 
-  void getPriceLastDocId() {
-    var qs = db
-        .collection('Stations')
-        .doc(station)
-        .collection('Price')
-        .orderBy("Price_Id")
-        .get()
-        .then((val) => {
-              if (val.docs.length > 0)
-                {
-                  priceLastID = val.docs[val.docs.length - 1].get("Price_Id"),
-                  priceDocId = priceLastID + 1,
-                  print("lastt priceeee IDD: $priceLastID"),
-                  print("doc priceeeee IDD: $priceDocId"),
-                }
-              else
-                {
-                  print("elseeeee"),
-                }
-            });
-  }
+ 
 
-  void getProfitLastDocId() {
+  void getPriceProfitLastDocId() {
     var qs = db
         .collection('Stations')
         .doc(station)
-        .collection('Profit')
-        .orderBy("Profit_Id")
+        .collection('Price-Profit')
+        .orderBy("Price_Profit_Id")
         .get()
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                  profitLastID = val.docs[val.docs.length - 1].get("Profit_Id"),
-                  profitDocId = profitLastID + 1,
+                  profitLastID = val.docs[val.docs.length - 1].get("Price_Profit_Id"),
+                  priceprofitid = profitLastID + 1,
                   print("lastt profittttt IDD: $profitLastID"),
-                  print("doc profitttt IDD: $profitDocId"),
+                  print("doc profitttt IDD: $priceprofitid"),
                 }
               else
                 {
@@ -114,14 +95,14 @@ class _FuelInfoState extends State<FuelInfo> {
     var qs = await db
         .collection('Stations')
         .doc(station)
-        .collection('Profit')
+        .collection('Price-Profit')
         .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
-        .orderBy('Profit_Id')
+        .orderBy('Price_Profit_Id')
         .get()
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                  profit = val.docs[val.docs.length - 1].get("Profit_Value"),
+                  profit = val.docs[val.docs.length - 1].get("Official_Profit"),
                   print('profitttttttt $profit'),
                 }
               else
@@ -136,9 +117,9 @@ class _FuelInfoState extends State<FuelInfo> {
     var qs = await db
         .collection('Stations')
         .doc(station)
-        .collection('Price')
+        .collection('Price-Profit')
         .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
-        .orderBy('Price_Id')
+        .orderBy('Price_Profit_Id')
         .get()
         .then((val) => {
               if (val.docs.length > 0)
@@ -157,8 +138,8 @@ class _FuelInfoState extends State<FuelInfo> {
 
   @override
   Widget build(BuildContext context) {
-    getPriceLastDocId();
-    getProfitLastDocId();
+    
+    getPriceProfitLastDocId();
     return Scaffold(
       backgroundColor: Colors.indigo[50],
       appBar: AppBar(
@@ -344,27 +325,15 @@ class _FuelInfoState extends State<FuelInfo> {
                               db
                                   .collection('Stations')
                                   .doc(station)
-                                  .collection('Profit')
-                                  .doc(profitDocId.toString())
+                                  .collection('Price-Profit')
+                                  .doc(priceprofitid.toString())
                                   .set({
                                 'Fuel_Type_Id': FuelTypeId,
-                                'Profit_Date':
+                                'Date':
                                     Timestamp.fromDate(DateTime.now()),
-                                'Profit_Id': profitDocId,
-                                'Profit_Value': newProfit
-                              });
-
-                              db
-                                  .collection('Stations')
-                                  .doc(station)
-                                  .collection('Price')
-                                  .doc(priceDocId.toString())
-                                  .set({
-                                'Fuel_Type_Id': FuelTypeId,
-                                'Official_Price': newPrice,
-                                'Price_Date':
-                                    Timestamp.fromDate(DateTime.now()),
-                                'Price_Id': priceDocId
+                                'Price_Profit_Id': priceprofitid,
+                                'Official_Profit': newProfit,
+                                'Official_Price':newPrice
                               }).then((result) {
                                 print("Success!");
 
@@ -390,67 +359,78 @@ class _FuelInfoState extends State<FuelInfo> {
               )),
           SizedBox(height: 20),
           SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                StreamBuilder(
-                  stream: db
-                      .collection('Stations')
-                      .doc(station)
-                      .collection('Price')
-                      .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
-                      .orderBy('Price_Id')
-                      .limit(5)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Text('no data');
-                    } else {
-                      return ListView.builder(
-                          shrinkWrap: true,
-                          physics: ScrollPhysics(),
-                          itemCount: snapshot.data.docs.length,
-                          itemBuilder: (context, index) {
-                            DocumentSnapshot documentSnapshot =
-                                snapshot.data.docs[index];
-                            return Text(
-                                documentSnapshot['Official_Price'].toString());
-                          });
-                    }
-                  },
-                ),
-                StreamBuilder(
-                  stream: db
-                      .collection('Stations')
-                      .doc(station)
-                      .collection('Profit')
-                      .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
-                      .orderBy('Profit_Id')
-                      .limit(5)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Text('no data');
-                    } else {
-                      return ListView.builder(
-                          shrinkWrap: true,
-                          physics: ScrollPhysics(),
-                          itemCount: snapshot.data.docs.length,
-                          itemBuilder: (context, index) {
-                            DocumentSnapshot documentSnapshot =
-                                snapshot.data.docs[index];
-                            return Text(
-                                documentSnapshot['Profit_Value'].toString());
-                          });
-                    }
-                  },
-                ),
-              ],
-            ),
+            child:StreamBuilder(
+              stream:FirebaseFirestore
+                                                    .instance
+                                                    .collection('Stations')
+                                                    .doc(station)
+                                                    .collection('Price-Profit')
+                                                    .orderBy('Price_Profit_Id',descending: true)      
+                                                    .where(
+                                                      'Fuel_Type_Id',
+                                                        isEqualTo: FuelTypeId
+                                                    ).snapshots(),
+              builder: (context, snapshot) {
+                                                  return snapshot.hasData
+                                                      ? new fueltypedatatable(
+                                                          snapshot.data.docs , FuelTypeName)
+                                                      : Text('No data');
+              }
+              ),
           ),
         ],
       ),
     );
+  }
+}
+
+class fueltypedatatable extends StatelessWidget {
+ 
+  List list;
+  String fuel_name;
+  fueltypedatatable(List list,String fuel_name){this.list=list;this.fuel_name=fuel_name;}
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Expanded(
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child:
+              DataTable(
+                columnSpacing:25 ,
+                columns:[ 
+            DataColumn(label: Text("Fuel Type",style: TextStyle(fontSize:21,fontWeight: FontWeight.w800),)),
+            DataColumn(label: Text("Price",style: TextStyle(fontSize:21,fontWeight: FontWeight.w800),)),
+            DataColumn(label: Text("Profit",style: TextStyle(fontSize:21,fontWeight: FontWeight.w500),)),
+            DataColumn(label: Text("Date",style: TextStyle(fontSize:21,fontWeight: FontWeight.w500),)),
+            
+            ],
+            rows:list.map((pp) => DataRow(
+              cells:[
+                DataCell(
+                   Text('${fuel_name}', style: TextStyle(fontSize:18),),
+                ),
+                DataCell(
+                   Text('${ pp["Official_Price"]}',style: TextStyle(fontSize:18)),
+                ),
+                DataCell(
+                   Text('${  pp["Official_Profit"]}',style: TextStyle(fontSize:18)),
+                ),
+                DataCell(
+                   Text('${ DateTime.tryParse( (pp["Date"]).toDate().toString())}',style: TextStyle(fontSize:18)),
+                ),
+                
+              ] 
+              )).toList(),
+
+              )
+            )
+            
+        )
+
+    ));
   }
 }
