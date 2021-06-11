@@ -625,7 +625,13 @@ class _CutomersState extends State<Cutomers> {
     Customer_selected(customer_drop);
     setState(() {});
   }
+  void delete_voucher(int id){
 
+  }
+
+  void delete_transaction(int id){
+
+  } 
   @override
   Widget build(BuildContext context) {
     sumvouchervalue = 0;
@@ -1014,13 +1020,14 @@ class _CutomersState extends State<Cutomers> {
                                                     .collection('Stations')
                                                     .doc(station)
                                                     .collection('Transaction')
+                                                    .orderBy('Transaction_Id', descending: true)
                                                     .where('Customer_Id',
                                                         isEqualTo: customer_id)
                                                     .snapshots(),
                                                 builder: (context, snapshot) {
                                                   return snapshot.hasData
-                                                      ? new datatable(
-                                                          snapshot.data.docs)
+                                                      ? new transactiondatatable(
+                                                         list:snapshot.data.docs ,station:station , customer_drop:customer_drop )
                                                       : Text('No data');
                                                 },
                                               ),
@@ -1039,98 +1046,31 @@ class _CutomersState extends State<Cutomers> {
                                     padding: EdgeInsets.all(20),
                                     child: Column(children: [
                                       SizedBox(height: 5),
-                                      TextFormField(
-                                          style: TextStyle(color: Colors.black),
-                                          decoration: InputDecoration(
-                                              enabledBorder:
-                                                  const OutlineInputBorder(
-                                                borderSide: const BorderSide(
-                                                    color: Colors.black,
-                                                    width: 2.0),
-                                              ),
-                                              labelText: "Search Here",
-                                              fillColor: Colors.white,
-                                              labelStyle: TextStyle(
-                                                  color: Colors.black45),
-                                              focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Colors.blueAccent,
-                                                      width: 2.0))),
-                                          onChanged: (String s) {}),
                                       SizedBox(height: 5),
                                       SingleChildScrollView(
                                           scrollDirection: Axis.horizontal,
-                                          child: DataTable(
-                                            columnSpacing: 35,
-                                            columns: [
-                                              DataColumn(
-                                                  label: Text(
-                                                "Fuel Type",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w800),
-                                              )),
-                                              DataColumn(
-                                                  label: Text(
-                                                "Voucher Value",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w800),
-                                              )),
-                                              DataColumn(
-                                                  label: Text(
-                                                "Voucher Date",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w800),
-                                              )),
-                                              DataColumn(
-                                                  label: Text(
-                                                "Note",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w800),
-                                              )),
-                                              DataColumn(
-                                                  label: Text(
-                                                "Delete",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              )),
-                                            ],
-                                            rows: const <DataRow>[
-                                              DataRow(
-                                                cells: <DataCell>[
-                                                  DataCell(Text('95')),
-                                                  DataCell(Text('60 000.00')),
-                                                  DataCell(Text(
-                                                      '2021-03-03 12:15:43')),
-                                                  DataCell(Text('')),
-                                                  DataCell(Icon(Icons.delete,
-                                                      color: Colors.red,
-                                                      size: 20)),
-                                                ],
+                                          child: 
+                                          customer_drop == null
+                                            ? Text('No data')
+                                            : StreamBuilder(
+                                                stream: FirebaseFirestore
+                                                    .instance
+                                                    .collection('Stations')
+                                                    .doc(station)
+                                                    .collection('Voucher')
+                                                    .orderBy('Voucher_Id', descending: true)
+                                                    .where('Customer_Id',
+                                                        isEqualTo: customer_id)
+                                                    .snapshots(),
+                                                builder: (context, snapshot) {
+                                                  return snapshot.hasData
+                                                      ? new voucherdatatable(
+                                                          snapshot.data.docs,station,customer_drop)
+                                                      : Text('No data');
+                                                },
                                               ),
-                                              DataRow(
-                                                cells: <DataCell>[
-                                                  DataCell(Text('95')),
-                                                  DataCell(Text('20 000.00')),
-                                                  DataCell(Text(
-                                                      '2021-03-01 2:25:03')),
-                                                  DataCell(Text('Some note')),
-                                                  DataCell(Icon(Icons.delete,
-                                                      color: Colors.red,
-                                                      size: 20)),
-                                                ],
-                                              ),
-                                            ],
-                                          )),
+                                          
+                                          ),
                                     ]))
                               ]),
                         ]))
@@ -1138,15 +1078,27 @@ class _CutomersState extends State<Cutomers> {
         ]));
   }
 }
+ 
+ class transactiondatatable extends StatelessWidget {
+   final List list;
+  final String station;
+  final String customer_drop;
+  const transactiondatatable({Key key ,this.list,this.station,this.customer_drop }) : super(key: key);
 
-class datatable extends StatelessWidget {
-  List list;
-  datatable(List list) {
-    this.list = list;
+
+  void delete_transaction(int id) async {
+    print("the id is ${id} ");
+    await FirebaseFirestore.instance
+    .collection('Stations')
+    .doc(station)
+    .collection('Transaction').
+    doc('${id}').delete().then((value) => print('deleteed'));
+
+    
   }
-@override
-  Widget build(BuildContext context) {
-    return Expanded(
+   @override
+   Widget build(BuildContext context) {
+     return Expanded(
         child: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
@@ -1171,7 +1123,82 @@ class datatable extends StatelessWidget {
                                                           icon: const Icon(
                                                               Icons.delete),
                                                           color: Colors.red,
-                                                          onPressed: () {},
+                                                          onPressed: () {
+delete_transaction(transaction["Transaction_Id"]);
+                                                          },
+                                                        ),
+                ),
+              ] 
+              )).toList(),
+
+              )
+            )));
+   }
+ } 
+
+
+class voucherdatatable extends StatelessWidget {
+  List list;
+   String station;
+    String customer_drop;
+  voucherdatatable(List list, String station ,  String customer_drop) {
+    this.list = list;
+    this.station=station;
+    this.customer_drop=customer_drop;
+    print(list.toString());
+  }
+  void delete_voucher(int id) async {
+    print("the id is ${id} ");
+    await FirebaseFirestore.instance
+    .collection('Stations')
+    .doc(station)
+    .collection('Voucher').
+    doc('${id}').delete().then((value) => print('deleteed'));
+
+    
+  }
+
+  //string fuction take id and get me the feul_type_name
+@override
+  Widget build(BuildContext context) {
+    return Expanded(
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child:
+              DataTable(
+                columns:[ 
+            DataColumn(label: Text("Fuel Type",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
+            DataColumn(label: Text("Voucher Value",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
+            DataColumn(label: Text("VoucherData",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
+            DataColumn(label: Text("Note",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
+            DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
+            
+            ],
+            rows:list.map((voucher) => DataRow(
+              cells:[
+                DataCell(
+                   Text('${voucher["Fuel_Type_Id"]}'),
+                ),
+                DataCell(
+                   Text('${voucher["Voucher_Value"]}'),
+                ),
+                
+                DataCell(
+                   Text('${DateTime.tryParse( (voucher["Voucher_Date"]).toDate().toString())}'),
+                ),
+                DataCell(
+                   Text('${voucher["Note"]}'),
+                ),
+                DataCell(
+                   IconButton(
+                                                          icon: const Icon(
+                                                              Icons.delete),
+                                                          color: Colors.red,
+                                                          onPressed: () {
+                                                            delete_voucher(voucher["Voucher_Id"]);
+                                                          },
                                                         ),
                 ),
               ] 
