@@ -168,7 +168,15 @@ class _CutomersState extends State<Cutomers> {
     print("Totla dep :: ${totaldept}");
   }
 
-  void Customer_selected(String newValue) async {
+
+
+
+
+
+
+
+
+   Customer_selected(String newValue) async {
     setState(() {
       customer_drop = newValue;
     });
@@ -1026,8 +1034,10 @@ class _CutomersState extends State<Cutomers> {
                                                     .snapshots(),
                                                 builder: (context, snapshot) {
                                                   return snapshot.hasData
-                                                      ? new transactiondatatable(
-                                                         list:snapshot.data.docs ,station:station , customer_drop:customer_drop )
+                                                    ? new transactiondatatable(
+                                                        snapshot.data.docs ,station , 
+                                                        customer_drop,Customer_selected
+                                                   ) 
                                                       : Text('No data');
                                                 },
                                               ),
@@ -1065,7 +1075,9 @@ class _CutomersState extends State<Cutomers> {
                                                 builder: (context, snapshot) {
                                                   return snapshot.hasData
                                                       ? new voucherdatatable(
-                                                          snapshot.data.docs,station,customer_drop)
+                                                          snapshot.data.docs,station,customer_drop 
+                                                          , Customer_selected
+                                                          )
                                                       : Text('No data');
                                                 },
                                               ),
@@ -1079,22 +1091,32 @@ class _CutomersState extends State<Cutomers> {
   }
 }
  
- class transactiondatatable extends StatelessWidget {
-   final List list;
+ class transactiondatatable extends StatefulWidget {
+  final List list;
   final String station;
   final String customer_drop;
-  const transactiondatatable({Key key ,this.list,this.station,this.customer_drop }) : super(key: key);
+  final ValueChanged<String>Customer_selected;
+    
+ 
+   transactiondatatable(this.list, this.station, this.customer_drop, this.Customer_selected) {
+    print(list.toString());
+  }
+   @override
+   _transactiondatatableState createState() => _transactiondatatableState();
+ }
+ 
+ class _transactiondatatableState extends State<transactiondatatable> {
 
 
-  void delete_transaction(int id) async {
+   void delete_transaction(int id) async {
     print("the id is ${id} ");
     await FirebaseFirestore.instance
     .collection('Stations')
-    .doc(station)
+    .doc(widget.station)
     .collection('Transaction').
     doc('${id}').delete().then((value) => print('deleteed'));
-
-    
+    widget.Customer_selected(widget.customer_drop);
+     
   }
    @override
    Widget build(BuildContext context) {
@@ -1110,7 +1132,7 @@ class _CutomersState extends State<Cutomers> {
             DataColumn(label: Text("Date",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
             DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
             ],
-            rows:list.map((transaction) => DataRow(
+            rows:widget.list.map((transaction) => DataRow(
               cells:[
                 DataCell(
                    Text('${transaction["Transaction_Value"]}'),
@@ -1124,7 +1146,7 @@ class _CutomersState extends State<Cutomers> {
                                                               Icons.delete),
                                                           color: Colors.red,
                                                           onPressed: () {
-delete_transaction(transaction["Transaction_Id"]);
+                                                      delete_transaction(transaction["Transaction_Id"]);
                                                           },
                                                         ),
                 ),
@@ -1134,14 +1156,15 @@ delete_transaction(transaction["Transaction_Id"]);
               )
             )));
    }
- } 
-
+ }
 
 class voucherdatatable extends StatelessWidget {
   List list;
    String station;
     String customer_drop;
-  voucherdatatable(List list, String station ,  String customer_drop) {
+    final ValueChanged<String>Customer_selected;
+    
+  voucherdatatable(List list, String station ,  String customer_drop, this.Customer_selected) {
     this.list = list;
     this.station=station;
     this.customer_drop=customer_drop;
@@ -1154,7 +1177,7 @@ class voucherdatatable extends StatelessWidget {
     .doc(station)
     .collection('Voucher').
     doc('${id}').delete().then((value) => print('deleteed'));
-
+    Customer_selected(customer_drop);
     
   }
 
