@@ -20,6 +20,7 @@ class _AddFuelTypeState extends State<AddFuelType> {
   int profit_error = -1;
 
   int last_fuel_type_id;
+  int last_price_prfit_id;
   int last_price_id;
   int last_profit_id;
   int new_fuel_type_id;
@@ -103,38 +104,23 @@ class _AddFuelTypeState extends State<AddFuelType> {
                 else
                   {print("Not Found")}
               });
-      // 2- Get the last price id :
+      // 2- Get the last price-profit id :
       await FirebaseFirestore.instance
           .collection('Stations')
           .doc(station)
-          .collection('Price')
-          .orderBy('Price_Id', descending: true)
+          .collection('Price-Profit')
+          .orderBy('Price_Profit_Id', descending: true)
           .get()
           .then((val) => {
                 if (val.docs.length > 0)
                   {
-                    last_price_id = val.docs[0].get("Price_Id"),
-                    print('last id is  : ${last_price_id}')
+                    last_price_prfit_id = val.docs[0].get("Price_Profit_Id"),
+                    print('last id is  : ${last_price_prfit_id}')
                   }
                 else
                   {print("Not Found")}
               });
-      //3 - get the last profit id:
-      await FirebaseFirestore.instance
-          .collection('Stations')
-          .doc(station)
-          .collection('Profit')
-          .orderBy('Profit_Id', descending: true)
-          .get()
-          .then((val) => {
-                if (val.docs.length > 0)
-                  {
-                    last_profit_id = val.docs[0].get("Profit_Id"),
-                    print('last id is  : ${last_profit_id}')
-                  }
-                else
-                  {print("Not Found")}
-              });
+     
 
       //get the new fuel_type_id :
       new_fuel_type_id = last_fuel_type_id + 1;
@@ -147,31 +133,22 @@ class _AddFuelTypeState extends State<AddFuelType> {
           .collection('Fuel_Type')
           .doc(new_fuel_type_id.toString())
           .set({'Fuel_Type_Id': new_fuel_type_id, 'Fuel_Type_Name': t1.text});
-      // b- adding to price collection:
-      FirebaseFirestore.instance
-          .collection('Stations')
-          .doc(station)
-          .collection('Price')
-          .doc((last_price_id + 1).toString())
-          .set({
-        'Fuel_Type_Id': new_fuel_type_id,
-        'Official_Price': int.parse(t2.text),
-        'Price_Date': DateTime.now(),
-        'Price_Id': last_price_id + 1
-      });
 
-      // c - adding to profit collection:
+      // b- adding to price-profit collection:
       FirebaseFirestore.instance
           .collection('Stations')
           .doc(station)
-          .collection('Profit')
-          .doc((last_profit_id + 1).toString())
+          .collection('Price-Profit')
+          .doc((last_price_prfit_id + 1).toString())
           .set({
-        'Fuel_Type_Id': new_fuel_type_id,
-        'Profit_Date': DateTime.now(),
-        'Profit_Id': last_profit_id + 1,
-        'Profit_Value': int.parse(t3.text)
+        'Date': Timestamp.fromDate(DateTime.now()),
+        'Fuel_Type_Id': t1.text,
+        'Official_Price': int.parse(t2.text),
+        'Official_Profit':int.parse(t3.text),
+        
+        'Price_Profit_Id': last_price_prfit_id + 1
       });
+        t1.text='';t2.text='';t3.text='';
     }
   }
 
