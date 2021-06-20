@@ -96,7 +96,7 @@ class _FuelInfoState extends State<FuelInfo> {
         .collection('Stations')
         .doc(station)
         .collection('Price-Profit')
-        .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
+        .where('Fuel_Type_Id', isEqualTo: FuelTypeName)
         .orderBy('Price_Profit_Id')
         .get()
         .then((val) => {
@@ -118,7 +118,7 @@ class _FuelInfoState extends State<FuelInfo> {
         .collection('Stations')
         .doc(station)
         .collection('Price-Profit')
-        .where('Fuel_Type_Id', isEqualTo: FuelTypeId)
+        .where('Fuel_Type_Id', isEqualTo: FuelTypeName)
         .orderBy('Price_Profit_Id')
         .get()
         .then((val) => {
@@ -328,10 +328,10 @@ class _FuelInfoState extends State<FuelInfo> {
                                   .collection('Price-Profit')
                                   .doc(priceprofitid.toString())
                                   .set({
-                                'Fuel_Type_Id': FuelTypeId,
+                                'Fuel_Type_Id': FuelTypeName.toString(),
                                 'Date':
                                     Timestamp.fromDate(DateTime.now()),
-                                'Price_Profit_Id': priceprofitid,
+                                'Price_Profit_Id': priceprofitid+1,
                                 'Official_Profit': newProfit,
                                 'Official_Price':newPrice
                               }).then((result) {
@@ -368,7 +368,7 @@ class _FuelInfoState extends State<FuelInfo> {
                                                     .orderBy('Price_Profit_Id',descending: true)      
                                                     .where(
                                                       'Fuel_Type_Id',
-                                                        isEqualTo: FuelTypeId
+                                                        isEqualTo: FuelTypeName
                                                     ).snapshots(),
               builder: (context, snapshot) {
                                                   return snapshot.hasData
