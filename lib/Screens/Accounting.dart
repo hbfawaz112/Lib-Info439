@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_petrol_station/Widgets/Drawer.dart';
+import 'package:intl/intl.dart';
 
 class Accounting extends StatefulWidget {
   @override
@@ -15,11 +16,18 @@ class _AccountingState extends State<Accounting> {
   int sumrecords;
   DateTime dt;
   int price=0, profit=0;
+  var formatter = NumberFormat('#,##,000');
+  int button_type=-1;
+  bool isloading=false;
 
   int contid; // for get the container id for specific pump
   String contname; //get container
   int calculationprofit, calculationprice;
   void getlastreacord() async {
+      setState(() {
+       
+        isloading=true;
+      });
    await FirebaseFirestore.instance
         .collection("Stations")
         .doc("Petrol Station 1")
@@ -117,6 +125,14 @@ class _AccountingState extends State<Accounting> {
                     }
                 }
             });
+
+      setState(() {
+       isloading=false;
+        button_type=3;
+        totalbill;
+        totalprofit;
+      });
+
 
     print("Total bill is ${totalbill}");
     print("Total profit is ${totalprofit}");
@@ -376,7 +392,35 @@ class _AccountingState extends State<Accounting> {
                   ]),
                 )),
             SizedBox(height: 10),
-            Padding(
+            // totalbill;
+       
+           isloading==true?CircularProgressIndicator():button_type==3?TotalCard(totalbill,totalprofit):Text(""),
+           
+          ],
+        ));
+  }
+}
+
+
+
+class TotalCard extends StatefulWidget {
+
+    int bill,profit;
+    TotalCard(int bill,int profit){
+        this.bill=bill;
+        this.profit=profit;
+    }
+
+  @override
+  _TotalCardState createState() => _TotalCardState();
+}
+
+class _TotalCardState extends State<TotalCard> {
+   var formatter = NumberFormat('###,###,###');
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
                 padding: EdgeInsets.all(7),
                 child: Container(
                   decoration: BoxDecoration(
@@ -405,7 +449,8 @@ class _AccountingState extends State<Accounting> {
                           ),
                         ),
                         SizedBox(height: 30),
-                        Text('0 L.L',
+                        
+                        Text('${formatter.format(widget.bill)}L.L',
                             style: TextStyle(fontSize: 35, color: Colors.green))
                       ])),
                       SizedBox(height: 10),
@@ -421,215 +466,11 @@ class _AccountingState extends State<Accounting> {
                           ),
                         ),
                         SizedBox(height: 30),
-                        Text('0 L.L',
+                        Text('${formatter.format(widget.profit)}L.L',
                             style: TextStyle(fontSize: 35, color: Colors.green))
                       ]))
                     ],
                   ),
-                )),
-            SizedBox(height: 10),
-            Padding(
-                padding: EdgeInsets.all(7),
-                child: Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 4, color: Colors.green)),
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('95',
-                              style: TextStyle(
-                                  fontSize: 35, color: Color(0xFF083369))),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Litters',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Bill',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Profit',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ]))
-                    ],
-                  ),
-                )),
-            SizedBox(height: 10),
-            Padding(
-                padding: EdgeInsets.all(7),
-                child: Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 4, color: Colors.green)),
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('98',
-                              style: TextStyle(
-                                  fontSize: 35, color: Color(0xFF083369))),
-                        ),
-                      ),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Litters',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Bill',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Profit',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ]))
-                    ],
-                  ),
-                )),
-            SizedBox(height: 10),
-            Padding(
-                padding: EdgeInsets.all(7),
-                child: Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 4, color: Colors.green)),
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('Diesel',
-                              style: TextStyle(
-                                  fontSize: 35, color: Color(0xFF083369))),
-                        ),
-                      ),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Litters',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Bill',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ])),
-                      SizedBox(height: 10),
-                      Card(
-                          child: Column(children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Text('Profit',
-                                style: TextStyle(
-                                    fontSize: 22, color: Colors.green)),
-                          ),
-                        ),
-                        SizedBox(height: 30),
-                        Text('0 L.L',
-                            style: TextStyle(fontSize: 35, color: Colors.green))
-                      ]))
-                    ],
-                  ),
-                ))
-          ],
-        ));
+                ));
   }
 }
