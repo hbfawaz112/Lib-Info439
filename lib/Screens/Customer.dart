@@ -64,6 +64,7 @@ class _CutomersState extends State<Cutomers> {
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
   String station;
+     var formatternb = NumberFormat('###,###,###');
 
   final DateFormat formatter = DateFormat('dd/MM/yyyy h:mm a');
   final DateFormat ff = DateFormat('yyyy/MM/dd');
@@ -282,8 +283,8 @@ class _CutomersState extends State<Cutomers> {
 
     setState(() {
       sum_transaction_title =
-          "Transaction (Total Paid : ${sumtransactionvalue})";
-      sum_voucher_title = "Voucher (Total voucher : ${sumvouchervalue})";
+          "Transaction (Total Paid : ${formatternb.format(sumtransactionvalue)})";
+      sum_voucher_title = "Voucher (Total voucher : ${formatternb.format(sumvouchervalue)})";
     });
   }
 
@@ -893,7 +894,8 @@ class _CutomersState extends State<Cutomers> {
                                   style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 27)),
-                              Text('${total_dept_to_text} (L.L.)',
+                                      //formatternb
+                              Text('${formatternb.format(total_dept_to_text)} (L.L.)',
                                   style: TextStyle(
                                       color: Colors.black38,
                                       fontWeight: FontWeight.w600,
@@ -1187,7 +1189,8 @@ class _CutomersState extends State<Cutomers> {
  
  class _transactiondatatableState extends State<transactiondatatable> {
 
-
+ var formatternb = NumberFormat('###,###,###');
+    
    void delete_transaction(int id) async {
     print("the id is ${id} ");
     await FirebaseFirestore.instance
@@ -1215,7 +1218,7 @@ class _CutomersState extends State<Cutomers> {
             rows:widget.list.map((transaction) => DataRow(
               cells:[
                 DataCell(
-                   Text('${transaction["Transaction_Value"]}'),
+                   Text('${formatternb.format(transaction["Transaction_Value"])}'),
                 ),
                 DataCell(
                    Text('${ DateTime.tryParse( (transaction["Transaction_Date"]).toDate().toString())}'),
@@ -1243,6 +1246,7 @@ class voucherdatatable extends StatelessWidget {
    String station;
     String customer_drop;
     final ValueChanged<String>Customer_selected;
+    var formatternb = NumberFormat('###,###,###');
     
   voucherdatatable(List list, String station ,  String customer_drop, this.Customer_selected) {
     this.list = list;
@@ -1285,7 +1289,7 @@ class voucherdatatable extends StatelessWidget {
                    Text('${voucher["Fuel_Type_Id"]}'),
                 ),
                 DataCell(
-                   Text('${voucher["Voucher_Value"]}'),
+                   Text('${  formatternb.format(voucher["Voucher_Value"])}'),
                 ),
                 
                 DataCell(
