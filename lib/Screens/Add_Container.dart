@@ -178,16 +178,22 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                             controller: t1,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "Container Name",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "Container Name",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         Text(
                           container_name_error == 1
@@ -207,16 +213,22 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                             controller: t2,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "1000",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "1000",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         Text(
                           capacity_error == 1
@@ -252,60 +264,69 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                                       side: BorderSide(
                                           width: 1.0, style: BorderStyle.solid),
                                       borderRadius: BorderRadius.all(
-                                          Radius.circular(5.0)),
+                                          Radius.circular(15.0)),
                                     ),
                                   ),
-                                  child: DropdownButton<String>(
-                                    isExpanded: true,
-                                    icon: const Icon(Icons.arrow_drop_down),
-                                    iconSize: 24,
-                                    elevation: 16,
-                                    style:
-                                        const TextStyle(color: Colors.black45),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      isExpanded: true,
+                                      icon: const Icon(Icons.arrow_drop_down),
+                                      iconSize: 24,
+                                      elevation: 16,
+                                      style: const TextStyle(
+                                          color: Colors.deepPurple),
+                                      underline: Container(
+                                        height: 2,
+                                        color: Colors.deepPurpleAccent,
+                                      ),
 
-                                    value: category,
-                                    //isDense: true,
-                                    hint: Text('Fuel Type'),
-                                    onChanged: (newValue) {
-                                      setState(() {
-                                        category = newValue;
-                                      });
-                                    },
-                                    items: snapshot.data != null
-                                        ? snapshot.data.docs
-                                            .map((DocumentSnapshot document) {
-                                            return new DropdownMenuItem<String>(
-                                                value: document
-                                                    .get('Fuel_Type_Name')
-                                                    .toString(),
-                                                child: new Container(
-                                                  // height: 20.0,
+                                      value: category,
+                                      //isDense: true,
+                                      hint: Text('Fuel Type'),
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          category = newValue;
+                                        });
+                                      },
+                                      items: snapshot.data != null
+                                          ? snapshot.data.docs
+                                              .map((DocumentSnapshot document) {
+                                              return new DropdownMenuItem<
+                                                      String>(
+                                                  value: document
+                                                      .get('Fuel_Type_Name')
+                                                      .toString(),
+                                                  child: new Container(
+                                                    // height: 20.0,
 
-                                                  //color: primaryColor,
+                                                    //color: primaryColor,
 
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 7, left: 8),
-                                                    child: new Text(
-                                                      document
-                                                          .get('Fuel_Type_Name')
-                                                          .toString(),
-                                                      style: TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.w900),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 7, left: 8),
+                                                      child: new Text(
+                                                        document
+                                                            .get(
+                                                                'Fuel_Type_Name')
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontSize: 20,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w900),
+                                                      ),
                                                     ),
-                                                  ),
-                                                ));
-                                          }).toList()
-                                        : DropdownMenuItem(
-                                            value: 'null',
-                                            child: new Container(
-                                              height: 100.0,
-                                              child: new Text('null'),
+                                                  ));
+                                            }).toList()
+                                          : DropdownMenuItem(
+                                              value: 'null',
+                                              child: new Container(
+                                                height: 100.0,
+                                                child: new Text('null'),
+                                              ),
                                             ),
-                                          ),
+                                    ),
                                   ));
                             }),
                         SizedBox(height: 20),
@@ -318,16 +339,22 @@ class _AddContainer_FirestoreState extends State<AddContainer_Firestore> {
                             controller: t4,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "Initial Volume",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "Initial Volume",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         Text(
                           volume_error == 1

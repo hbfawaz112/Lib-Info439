@@ -3,22 +3,25 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_petrol_station/Screens/shipments.dart';
 import 'package:flutter_petrol_station/Services/cloud_services.dart';
 import 'package:flutter_petrol_station/Widgets/Drawer.dart';
 import 'package:intl/intl.dart';
+import 'package:pattern_formatter/numeric_formatter.dart';
+import 'package:intl/number_symbols.dart';
 
+NumberFormat numberFormat = new NumberFormat('###,000');
 
-class Cutomers extends StatefulWidget {
+class Customers extends StatefulWidget {
   @override
-  _CutomersState createState() => _CutomersState();
+  _CustomersState createState() => _CustomersState();
 }
 
-class _CutomersState extends State<Cutomers> {
+class _CustomersState extends State<Customers> {
   // String dropdownValue = 'One';
 
   int last_doc_id;
 
- 
   //too : defin contorller
   TextEditingController t1 = new TextEditingController();
   TextEditingController t2 = new TextEditingController();
@@ -31,13 +34,11 @@ class _CutomersState extends State<Cutomers> {
   // for date and value of pay off transaction
   TextEditingController t7 = new TextEditingController();
   TextEditingController t8 = new TextEditingController();
-  
 
-
-  // text editing controller for dates iputs : 
+  // text editing controller for dates iputs :
   TextEditingController t9 = new TextEditingController();
   TextEditingController t10 = new TextEditingController();
-  
+
   int sumvouchervalue = 0;
   int sumtransactionvalue = 0;
   int totaldept = 1;
@@ -50,7 +51,7 @@ class _CutomersState extends State<Cutomers> {
 
   bool visible_buttons = false;
 
-  bool isfilter=false;
+  bool isfilter = false;
 
   int state_table = 0;
 
@@ -64,13 +65,12 @@ class _CutomersState extends State<Cutomers> {
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
   String station;
-     var formatternb = NumberFormat('###,###,###');
 
   final DateFormat formatter = DateFormat('dd/MM/yyyy h:mm a');
   final DateFormat ff = DateFormat('yyyy/MM/dd');
-  String fromDate,toDate;
-  DateTime fD,tD;
-  Timestamp myTimeStamp,myTimeStamp1;
+  String fromDate, toDate;
+  DateTime fD, tD;
+  Timestamp myTimeStamp, myTimeStamp1;
 
   @override
   void initState() {
@@ -185,15 +185,7 @@ class _CutomersState extends State<Cutomers> {
     print("Totla dep :: ${totaldept}");
   }
 
-
-
-
-
-
-
-
-
-   Customer_selected(String newValue) async {
+  Customer_selected(String newValue) async {
     setState(() {
       customer_drop = newValue;
     });
@@ -283,8 +275,8 @@ class _CutomersState extends State<Cutomers> {
 
     setState(() {
       sum_transaction_title =
-          "Transaction (Total Paid : ${formatternb.format(sumtransactionvalue)})";
-      sum_voucher_title = "Voucher (Total voucher : ${formatternb.format(sumvouchervalue)})";
+          "Transaction (Total Paid : ${sumtransactionvalue})";
+      sum_voucher_title = "Voucher (Total voucher : ${sumvouchervalue})";
     });
   }
 
@@ -514,7 +506,11 @@ class _CutomersState extends State<Cutomers> {
         Text("Value", style: TextStyle(fontSize: 21, color: Colors.black45)),
         SizedBox(height: 10),
         TextFormField(
+            keyboardType: TextInputType.number,
             controller: t7,
+            inputFormatters: [
+              ThousandsFormatter(),
+            ],
             //  enabled: false,
             //enableInteractiveSelection: false,
             style: TextStyle(color: Colors.black),
@@ -537,15 +533,17 @@ class _CutomersState extends State<Cutomers> {
             //enableInteractiveSelection: false,
             style: TextStyle(color: Colors.black),
             decoration: InputDecoration(
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.black, width: 2.0),
-                ),
-                //labelText: phone,
-                fillColor: Colors.white,
-                labelStyle: TextStyle(color: Colors.black45),
-                focusedBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.blueAccent, width: 2.0))),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blueAccent),
+                borderRadius: BorderRadius.all(Radius.circular(32.0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blueAccent, width: 2.0),
+                borderRadius: BorderRadius.all(Radius.circular(32.0)),
+              ), //labelText: phone,
+              fillColor: Colors.white,
+              labelStyle: TextStyle(color: Colors.black45),
+            ),
             onChanged: (String s) {}),
         ButtonTheme(
           height: 50.0,
@@ -635,6 +633,8 @@ class _CutomersState extends State<Cutomers> {
               else
                 {print("Not Found")}
             });
+    String g = t7.text.replaceAll(RegExp(','), '');
+
     await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
@@ -644,21 +644,38 @@ class _CutomersState extends State<Cutomers> {
       'Customer_Id': customer_id,
       'Transaction_Date': DateTime.parse(t8.text),
       'Transaction_Id': last_transaction_id + 1,
-      'Transaction_Value': int.parse(t7.text)
+      'Transaction_Value': int.parse(g)
     });
     print('done addedd');
     Customer_selected(customer_drop);
     setState(() {});
   }
-  void delete_voucher(int id){
 
-  }
+  void delete_voucher(int id) {}
 
-  void delete_transaction(int id){
+  void delete_transaction(int id) {}
 
-  } 
+  NumberSymbols numberFormatSymbols;
   @override
   Widget build(BuildContext context) {
+    numberFormatSymbols = new NumberSymbols(
+      NAME: "zz",
+      DECIMAL_SEP: '.',
+      GROUP_SEP: '\u00A0',
+      PERCENT: '%',
+      ZERO_DIGIT: '0',
+      PLUS_SIGN: '+',
+      MINUS_SIGN: '-',
+      EXP_SYMBOL: 'e',
+      PERMILL: '\u2030',
+      INFINITY: '\u221E',
+      NAN: 'NaN',
+      DECIMAL_PATTERN: '#,##0.###',
+      SCIENTIFIC_PATTERN: '#E0',
+      PERCENT_PATTERN: '#,##0%',
+      CURRENCY_PATTERN: '\u00A4#,##0.00',
+      DEF_CURRENCY_CODE: 'AUD',
+    );
     sumvouchervalue = 0;
     sumtransactionvalue = 0;
     totaldept = 0;
@@ -705,16 +722,22 @@ class _CutomersState extends State<Cutomers> {
                             controller: t1,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "Customer Name",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "Customer Name",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         SizedBox(height: 15),
                         Text("Phone",
@@ -725,16 +748,22 @@ class _CutomersState extends State<Cutomers> {
                             controller: t2,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "ex:01111111",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "ex:01111111",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         SizedBox(height: 15),
                         Text("Email",
@@ -745,16 +774,22 @@ class _CutomersState extends State<Cutomers> {
                             controller: t3,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.black, width: 2.0),
-                                ),
-                                labelText: "example@example.com",
-                                fillColor: Colors.white,
-                                labelStyle: TextStyle(color: Colors.black45),
-                                focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.blueAccent, width: 2.0))),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: Colors.blueAccent),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(32.0)),
+                              ),
+                              labelText: "example@example.com",
+                              fillColor: Colors.white,
+                              labelStyle: TextStyle(color: Colors.black45),
+                            ),
                             onChanged: (String s) {}),
                         SizedBox(height: 22),
                         ButtonTheme(
@@ -894,8 +929,7 @@ class _CutomersState extends State<Cutomers> {
                                   style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 27)),
-                                      //formatternb
-                              Text('${formatternb.format(total_dept_to_text)} (L.L.)',
+                              Text('${total_dept_to_text} (L.L.)',
                                   style: TextStyle(
                                       color: Colors.black38,
                                       fontWeight: FontWeight.w600,
@@ -966,22 +1000,25 @@ class _CutomersState extends State<Cutomers> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
-                            controller: t9,
+                              controller: t9,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  suffixIcon: Icon(Icons.date_range_rounded,
-                                      color: Colors.indigo[300]),
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                 labelText: ff.format(DateTime.now()),
-                                  fillColor: Colors.white,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: ff.format(DateTime.now()),
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
                           Text("To Date",
@@ -989,22 +1026,25 @@ class _CutomersState extends State<Cutomers> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
-                            controller: t10,
+                              controller: t10,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  suffixIcon: Icon(Icons.date_range_rounded,
-                                      color: Colors.indigo[300]),
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: ff.format(DateTime.now()),
-                                  fillColor: Colors.white,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: ff.format(DateTime.now()),
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 20),
                           ButtonTheme(
@@ -1023,19 +1063,20 @@ class _CutomersState extends State<Cutomers> {
                                         color: Colors.white, size: 20)
                                   ]),
                               onPressed: () {
-                                  setState(() {
-                                     isfilter=true;
-                                     fromDate=t9.text;
-                                     toDate=t10.text;
-                                     fD=ff.parse(fromDate);
-                                     tD=ff.parse(toDate);
-                                      myTimeStamp = Timestamp.fromDate(fD);
-                                      myTimeStamp1 = Timestamp.fromDate(tD);
+                                setState(() {
+                                  isfilter = true;
+                                  fromDate = t9.text;
+                                  toDate = t10.text;
+                                  fD = ff.parse(fromDate);
+                                  tD = ff.parse(toDate);
+                                  myTimeStamp = Timestamp.fromDate(fD);
+                                  myTimeStamp1 = Timestamp.fromDate(tD);
 
-                                      print('***************** ${myTimeStamp}************');
-                                      print('******************* ${myTimeStamp1}**********');
-                                   }); 
-
+                                  print(
+                                      '***************** ${myTimeStamp}************');
+                                  print(
+                                      '******************* ${myTimeStamp1}**********');
+                                });
                               },
                             ),
                           ),
@@ -1053,53 +1094,70 @@ class _CutomersState extends State<Cutomers> {
                                     child: Column(children: [
                                       SizedBox(height: 5),
                                       SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: customer_drop == null
-                                            ? Text('No data')
-                                            :isfilter==false?
-                                              StreamBuilder(
-                                                stream: FirebaseFirestore
-                                                    .instance
-                                                    .collection('Stations')
-                                                    .doc(station)
-                                                    .collection('Transaction')
-                                                    .orderBy('Transaction_Id', descending: true)
-                                                    .where('Customer_Id',
-                                                        isEqualTo: customer_id)
-                                                    .snapshots(),
-                                                builder: (context, snapshot) {
-                                                  return snapshot.hasData
-                                                    ? new transactiondatatable(
-                                                        snapshot.data.docs ,station , 
-                                                        customer_drop,Customer_selected
-                                                   ) 
-                                                      : Text('No data');
-                                                },
-                                              ):
-                                               StreamBuilder(
-                                                stream: FirebaseFirestore
-                                                    .instance
-                                                    .collection('Stations')
-                                                    .doc(station)
-                                                    .collection('Transaction')
-                                                   // .orderBy('Transaction_Id', descending: true)
-                                                    .where('Customer_Id',
-                                                        isEqualTo: customer_id)
-                                                    .where('Transaction_Date',
-                                                    isGreaterThanOrEqualTo:  myTimeStamp)
-                                                   .where('Transaction_Date',
-                                                    isLessThanOrEqualTo:  myTimeStamp1)
-                                                    .snapshots(),
-                                                builder: (context, snapshot) {
-                                                  return snapshot.hasData
-                                                    ? new transactiondatatable(
-                                                        snapshot.data.docs ,station , 
-                                                        customer_drop,Customer_selected
-                                                   ) 
-                                                      : Text('No data');
-                                                },
-                                              )
-                                      ),
+                                          scrollDirection: Axis.horizontal,
+                                          child: customer_drop == null
+                                              ? Text('No data')
+                                              : isfilter == false
+                                                  ? StreamBuilder(
+                                                      stream: FirebaseFirestore
+                                                          .instance
+                                                          .collection(
+                                                              'Stations')
+                                                          .doc(station)
+                                                          .collection(
+                                                              'Transaction')
+                                                          .orderBy(
+                                                              'Transaction_Id',
+                                                              descending: true)
+                                                          .where('Customer_Id',
+                                                              isEqualTo:
+                                                                  customer_id)
+                                                          .snapshots(),
+                                                      builder:
+                                                          (context, snapshot) {
+                                                        return snapshot.hasData
+                                                            ? new transactiondatatable(
+                                                                snapshot
+                                                                    .data.docs,
+                                                                station,
+                                                                customer_drop,
+                                                                Customer_selected)
+                                                            : Text('No data');
+                                                      },
+                                                    )
+                                                  : StreamBuilder(
+                                                      stream: FirebaseFirestore
+                                                          .instance
+                                                          .collection(
+                                                              'Stations')
+                                                          .doc(station)
+                                                          .collection(
+                                                              'Transaction')
+                                                          // .orderBy('Transaction_Id', descending: true)
+                                                          .where('Customer_Id',
+                                                              isEqualTo:
+                                                                  customer_id)
+                                                          .where(
+                                                              'Transaction_Date',
+                                                              isGreaterThanOrEqualTo:
+                                                                  myTimeStamp)
+                                                          .where(
+                                                              'Transaction_Date',
+                                                              isLessThanOrEqualTo:
+                                                                  myTimeStamp1)
+                                                          .snapshots(),
+                                                      builder:
+                                                          (context, snapshot) {
+                                                        return snapshot.hasData
+                                                            ? new transactiondatatable(
+                                                                snapshot
+                                                                    .data.docs,
+                                                                station,
+                                                                customer_drop,
+                                                                Customer_selected)
+                                                            : Text('No data');
+                                                      },
+                                                    )),
                                     ]))
                               ]),
                           SizedBox(height: 10),
@@ -1116,55 +1174,64 @@ class _CutomersState extends State<Cutomers> {
                                       SizedBox(height: 5),
                                       SizedBox(height: 5),
                                       SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: 
-                                          customer_drop == null
+                                        scrollDirection: Axis.horizontal,
+                                        child: customer_drop == null
                                             ? Text('No data')
-                                            :isfilter==false?
-                                             StreamBuilder(
-                                                stream: FirebaseFirestore
-                                                    .instance
-                                                    .collection('Stations')
-                                                    .doc(station)
-                                                    .collection('Voucher')
-                                                    //.orderBy('Voucher_Id', descending: true)
-                                                    .where('Customer_Id',
-                                                        isEqualTo: customer_id)
-                                                         .where('Voucher_Date',
-                                                    isGreaterThanOrEqualTo:  myTimeStamp)
-                                                   .where('Voucher_Date',
-                                                    isLessThanOrEqualTo:  myTimeStamp1)
-                                                    .snapshots(),
-                                                builder: (context, snapshot) {
-                                                  return snapshot.hasData
-                                                      ? new voucherdatatable(
-                                                          snapshot.data.docs,station,customer_drop 
-                                                          , Customer_selected
-                                                          )
-                                                      : Text('No data');
-                                                },
-                                              ):
-                                              StreamBuilder(
-                                                stream: FirebaseFirestore
-                                                    .instance
-                                                    .collection('Stations')
-                                                    .doc(station)
-                                                    .collection('Voucher')
-                                                    .orderBy('Voucher_Id', descending: true)
-                                                    .where('Customer_Id',
-                                                        isEqualTo: customer_id)
-                                                    .snapshots(),
-                                                builder: (context, snapshot) {
-                                                  return snapshot.hasData
-                                                      ? new voucherdatatable(
-                                                          snapshot.data.docs,station,customer_drop 
-                                                          , Customer_selected
-                                                          )
-                                                      : Text('No data');
-                                                },
-                                              ),
-                                          
-                                          ),
+                                            : isfilter == false
+                                                ? StreamBuilder(
+                                                    stream: FirebaseFirestore
+                                                        .instance
+                                                        .collection('Stations')
+                                                        .doc(station)
+                                                        .collection('Voucher')
+                                                        //.orderBy('Voucher_Id', descending: true)
+                                                        .where('Customer_Id',
+                                                            isEqualTo:
+                                                                customer_id)
+                                                        .where('Voucher_Date',
+                                                            isGreaterThanOrEqualTo:
+                                                                myTimeStamp)
+                                                        .where('Voucher_Date',
+                                                            isLessThanOrEqualTo:
+                                                                myTimeStamp1)
+                                                        .snapshots(),
+                                                    builder:
+                                                        (context, snapshot) {
+                                                      return snapshot.hasData
+                                                          ? new voucherdatatable(
+                                                              snapshot
+                                                                  .data.docs,
+                                                              station,
+                                                              customer_drop,
+                                                              Customer_selected)
+                                                          : Text('No data');
+                                                    },
+                                                  )
+                                                : StreamBuilder(
+                                                    stream: FirebaseFirestore
+                                                        .instance
+                                                        .collection('Stations')
+                                                        .doc(station)
+                                                        .collection('Voucher')
+                                                        .orderBy('Voucher_Id',
+                                                            descending: true)
+                                                        .where('Customer_Id',
+                                                            isEqualTo:
+                                                                customer_id)
+                                                        .snapshots(),
+                                                    builder:
+                                                        (context, snapshot) {
+                                                      return snapshot.hasData
+                                                          ? new voucherdatatable(
+                                                              snapshot
+                                                                  .data.docs,
+                                                              station,
+                                                              customer_drop,
+                                                              Customer_selected)
+                                                          : Text('No data');
+                                                    },
+                                                  ),
+                                      ),
                                     ]))
                               ]),
                         ]))
@@ -1172,146 +1239,183 @@ class _CutomersState extends State<Cutomers> {
         ]));
   }
 }
- 
- class transactiondatatable extends StatefulWidget {
+
+class transactiondatatable extends StatefulWidget {
   final List list;
   final String station;
   final String customer_drop;
-  final ValueChanged<String>Customer_selected;
-    
- 
-   transactiondatatable(this.list, this.station, this.customer_drop, this.Customer_selected) {
+  final ValueChanged<String> Customer_selected;
+
+  transactiondatatable(
+      this.list, this.station, this.customer_drop, this.Customer_selected) {
     print(list.toString());
   }
-   @override
-   _transactiondatatableState createState() => _transactiondatatableState();
- }
- 
- class _transactiondatatableState extends State<transactiondatatable> {
+  @override
+  _transactiondatatableState createState() => _transactiondatatableState();
+}
 
- var formatternb = NumberFormat('###,###,###');
-    
-   void delete_transaction(int id) async {
+class _transactiondatatableState extends State<transactiondatatable> {
+  void delete_transaction(int id) async {
     print("the id is ${id} ");
     await FirebaseFirestore.instance
-    .collection('Stations')
-    .doc(widget.station)
-    .collection('Transaction').
-    doc('${id}').delete().then((value) => print('deleteed'));
+        .collection('Stations')
+        .doc(widget.station)
+        .collection('Transaction')
+        .doc('${id}')
+        .delete()
+        .then((value) => print('deleteed'));
     widget.Customer_selected(widget.customer_drop);
-     
-  }
-   @override
-   Widget build(BuildContext context) {
-     return Expanded(
-        child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child:
-              DataTable(
-                columns:[ 
-            DataColumn(label: Text("Value",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("Date",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
-            ],
-            rows:widget.list.map((transaction) => DataRow(
-              cells:[
-                DataCell(
-                   Text('${formatternb.format(transaction["Transaction_Value"])}'),
-                ),
-                DataCell(
-                   Text('${ DateTime.tryParse( (transaction["Transaction_Date"]).toDate().toString())}'),
-                ),
-                DataCell(
-                   IconButton(
-                                                          icon: const Icon(
-                                                              Icons.delete),
-                                                          color: Colors.red,
-                                                          onPressed: () {
-                                                      delete_transaction(transaction["Transaction_Id"]);
-                                                          },
-                                                        ),
-                ),
-              ] 
-              )).toList(),
-
-              )
-            )));
-   }
- }
-
-class voucherdatatable extends StatelessWidget {
-  List list;
-   String station;
-    String customer_drop;
-    final ValueChanged<String>Customer_selected;
-    var formatternb = NumberFormat('###,###,###');
-    
-  voucherdatatable(List list, String station ,  String customer_drop, this.Customer_selected) {
-    this.list = list;
-    this.station=station;
-    this.customer_drop=customer_drop;
-    print(list.toString());
-  }
-  void delete_voucher(int id) async {
-    print("the id is ${id} ");
-    await FirebaseFirestore.instance
-    .collection('Stations')
-    .doc(station)
-    .collection('Voucher').
-    doc('${id}').delete().then((value) => print('deleteed'));
-    Customer_selected(customer_drop);
-    
   }
 
-  //string fuction take id and get me the feul_type_name
-@override
+  NumberFormat numberFormat = new NumberFormat('###,000');
+  @override
   Widget build(BuildContext context) {
     return Expanded(
         child: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child:
-              DataTable(
-                columns:[ 
-            DataColumn(label: Text("Fuel Type",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("Voucher Value",style: TextStyle(fontSize:16,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("VoucherData",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
-            DataColumn(label: Text("Note",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
-            DataColumn(label: Text("Delete",style: TextStyle(fontSize:16,fontWeight: FontWeight.w500),)),
-            
-            ],
-            rows:list.map((voucher) => DataRow(
-              cells:[
-                DataCell(
-                   Text('${voucher["Fuel_Type_Id"]}'),
-                ),
-                DataCell(
-                   Text('${  formatternb.format(voucher["Voucher_Value"])}'),
-                ),
-                
-                DataCell(
-                   Text('${DateTime.tryParse( (voucher["Voucher_Date"]).toDate().toString())}'),
-                ),
-                DataCell(
-                   Text('${voucher["Note"]}'),
-                ),
-                DataCell(
-                   IconButton(
-                                                          icon: const Icon(
-                                                              Icons.delete),
-                                                          color: Colors.red,
-                                                          onPressed: () {
-                                                            delete_voucher(voucher["Voucher_Id"]);
-                                                          },
-                                                        ),
-                ),
-              ] 
-              )).toList(),
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    DataColumn(
+                        label: Text(
+                      "Value",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "Date",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "Delete",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    )),
+                  ],
+                  rows: widget.list
+                      .map((transaction) => DataRow(cells: [
+                            DataCell(
+                              Text(
+                                  '${numberFormat.format(transaction["Transaction_Value"])}'),
+                            ),
+                            DataCell(
+                              Text(
+                                  '${DateTime.tryParse((transaction["Transaction_Date"]).toDate().toString())}'),
+                            ),
+                            DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                color: Colors.red,
+                                onPressed: () {
+                                  delete_transaction(
+                                      transaction["Transaction_Id"]);
+                                },
+                              ),
+                            ),
+                          ]))
+                      .toList(),
+                ))));
+  }
+}
 
-              )
-            )));
+class voucherdatatable extends StatelessWidget {
+  List list;
+  String station;
+  String customer_drop;
+  final ValueChanged<String> Customer_selected;
+
+  voucherdatatable(
+      List list, String station, String customer_drop, this.Customer_selected) {
+    this.list = list;
+    this.station = station;
+    this.customer_drop = customer_drop;
+    print(list.toString());
+  }
+  void delete_voucher(int id) async {
+    print("the id is ${id} ");
+    await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc(station)
+        .collection('Voucher')
+        .doc('${id}')
+        .delete()
+        .then((value) => print('deleteed'));
+    Customer_selected(customer_drop);
+  }
+
+  NumberFormat numberFormat = new NumberFormat('###,000');
+  //string fuction take id and get me the feul_type_name
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    DataColumn(
+                        label: Text(
+                      "Fuel Type",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "Voucher Value",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "VoucherData",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "Note",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    )),
+                    DataColumn(
+                        label: Text(
+                      "Delete",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    )),
+                  ],
+                  rows: list
+                      .map((voucher) => DataRow(cells: [
+                            DataCell(
+                              Text('${voucher["Fuel_Type_Id"]}'),
+                            ),
+                            DataCell(
+                              Text(
+                                  '${numberFormat.format(voucher["Voucher_Value"])}'),
+                            ),
+                            DataCell(
+                              Text(
+                                  '${DateTime.tryParse((voucher["Voucher_Date"]).toDate().toString())}'),
+                            ),
+                            DataCell(
+                              Text('${voucher["Note"]}'),
+                            ),
+                            DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                color: Colors.red,
+                                onPressed: () {
+                                  delete_voucher(voucher["Voucher_Id"]);
+                                },
+                              ),
+                            ),
+                          ]))
+                      .toList(),
+                ))));
   }
 }

@@ -3,8 +3,13 @@ import 'package:flutter_petrol_station/widgets/Drawer.dart';
 import 'package:flutter_petrol_station/Services/cloud_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/number_symbols.dart';
+import 'package:flutter/services.dart';
+import 'package:pattern_formatter/pattern_formatter.dart';
+import 'package:intl/intl.dart';
 
 String station;
+NumberFormat numberFormat;
 
 class FuelInfo extends StatefulWidget {
   //get passed data from previous page
@@ -67,8 +72,6 @@ class _FuelInfoState extends State<FuelInfo> {
     // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
   }
 
- 
-
   void getPriceProfitLastDocId() {
     var qs = db
         .collection('Stations')
@@ -79,7 +82,8 @@ class _FuelInfoState extends State<FuelInfo> {
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                  profitLastID = val.docs[val.docs.length - 1].get("Price_Profit_Id"),
+                  profitLastID =
+                      val.docs[val.docs.length - 1].get("Price_Profit_Id"),
                   priceprofitid = profitLastID + 1,
                   print("lastt profittttt IDD: $profitLastID"),
                   print("doc profitttt IDD: $priceprofitid"),
@@ -136,9 +140,28 @@ class _FuelInfoState extends State<FuelInfo> {
     setState(() {});
   }
 
+  NumberSymbols numberFormatSymbols;
   @override
   Widget build(BuildContext context) {
-    
+    numberFormat = new NumberFormat('###,000');
+    numberFormatSymbols = new NumberSymbols(
+      NAME: "zz",
+      DECIMAL_SEP: '.',
+      GROUP_SEP: '\u00A0',
+      PERCENT: '%',
+      ZERO_DIGIT: '0',
+      PLUS_SIGN: '+',
+      MINUS_SIGN: '-',
+      EXP_SYMBOL: 'e',
+      PERMILL: '\u2030',
+      INFINITY: '\u221E',
+      NAN: 'NaN',
+      DECIMAL_PATTERN: '#,##0.###',
+      SCIENTIFIC_PATTERN: '#E0',
+      PERCENT_PATTERN: '#,##0%',
+      CURRENCY_PATTERN: '\u00A4#,##0.00',
+      DEF_CURRENCY_CODE: 'AUD',
+    );
     getPriceProfitLastDocId();
     return Scaffold(
       backgroundColor: Colors.indigo[50],
@@ -195,11 +218,14 @@ class _FuelInfoState extends State<FuelInfo> {
                     SizedBox(height: 10),
                     TextFormField(
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          ThousandsFormatter(),
+                        ],
                         enabled: enable,
+                        readOnly: readOnlyOption,
                         controller: msgController,
                         enableInteractiveSelection: false,
                         focusNode: FocusNode(),
-                        readOnly: readOnlyOption,
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
@@ -214,14 +240,16 @@ class _FuelInfoState extends State<FuelInfo> {
                                 BorderRadius.all(Radius.circular(32.0)),
                           ),
                           labelText: officialPrice.toString() != null
-                              ? officialPrice.toString()
+                              ? numberFormat.format(officialPrice)
                               : 0,
                           fillColor: fillColor,
                           filled: true,
                           labelStyle: TextStyle(color: Colors.black45),
                         ),
                         onChanged: (String s) {
-                          newPrice = int.parse(s);
+                          String g = s.replaceAll(RegExp(','), '');
+
+                          newPrice = int.parse(g);
                         }),
                     Text(
                       priceError == 1 ? 'Enter positive value' : '',
@@ -237,6 +265,9 @@ class _FuelInfoState extends State<FuelInfo> {
                         enabled: enable,
                         controller: msgController1,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          ThousandsFormatter(),
+                        ],
                         enableInteractiveSelection: false,
                         focusNode: FocusNode(),
                         readOnly: readOnlyOption,
@@ -253,14 +284,17 @@ class _FuelInfoState extends State<FuelInfo> {
                             borderRadius:
                                 BorderRadius.all(Radius.circular(32.0)),
                           ),
-                          labelText:
-                              profit.toString() != null ? profit.toString() : 0,
+                          labelText: profit.toString() != null
+                              ? numberFormat.format(profit)
+                              : 0,
                           fillColor: fillColor,
                           filled: true,
                           labelStyle: TextStyle(color: Colors.black45),
                         ),
                         onChanged: (String s) {
-                          newProfit = int.parse(s);
+                          String g = s.replaceAll(RegExp(','), '');
+
+                          newProfit = int.parse(g);
                         }),
                     Text(
                       profitError == 1 ? 'Enter positive value' : '',
@@ -329,11 +363,10 @@ class _FuelInfoState extends State<FuelInfo> {
                                   .doc(priceprofitid.toString())
                                   .set({
                                 'Fuel_Type_Id': FuelTypeName.toString(),
-                                'Date':
-                                    Timestamp.fromDate(DateTime.now()),
-                                'Price_Profit_Id': priceprofitid+1,
+                                'Date': Timestamp.fromDate(DateTime.now()),
+                                'Price_Profit_Id': priceprofitid + 1,
                                 'Official_Profit': newProfit,
-                                'Official_Price':newPrice
+                                'Official_Price': newPrice
                               }).then((result) {
                                 print("Success!");
 
@@ -344,6 +377,33 @@ class _FuelInfoState extends State<FuelInfo> {
                                   //profit = newProfit;
                                   newProfit = null;
                                   newPrice = null;
+                                  db
+                                      .collection('Stations')
+                                      .doc(station)
+                                      .collection('Price-Profit')
+                                      .where('Fuel_Type_Id',
+                                          isEqualTo: FuelTypeName)
+                                      .orderBy('Price_Profit_Id')
+                                      .get()
+                                      .then((val) => {
+                                            if (val.docs.length > 0)
+                                              {
+                                                setState(() {
+                                                  officialPrice = val
+                                                      .docs[val.docs.length - 1]
+                                                      .get("Official_Price");
+                                                  profit = val
+                                                      .docs[val.docs.length - 1]
+                                                      .get("Official_Profit");
+                                                }),
+                                                print(
+                                                    'officialPriceeeeeeeeeee $officialPrice'),
+                                              }
+                                            else
+                                              {
+                                                print("elseeeee"),
+                                              }
+                                          });
                                 });
                               }).catchError((onError) {
                                 //alert error
@@ -359,24 +419,19 @@ class _FuelInfoState extends State<FuelInfo> {
               )),
           SizedBox(height: 20),
           SingleChildScrollView(
-            child:StreamBuilder(
-              stream:FirebaseFirestore
-                                                    .instance
-                                                    .collection('Stations')
-                                                    .doc(station)
-                                                    .collection('Price-Profit')
-                                                    .orderBy('Price_Profit_Id',descending: true)      
-                                                    .where(
-                                                      'Fuel_Type_Id',
-                                                        isEqualTo: FuelTypeName
-                                                    ).snapshots(),
-              builder: (context, snapshot) {
-                                                  return snapshot.hasData
-                                                      ? new fueltypedatatable(
-                                                          snapshot.data.docs , FuelTypeName)
-                                                      : Text('No data');
-              }
-              ),
+            child: StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection('Stations')
+                    .doc(station)
+                    .collection('Price-Profit')
+                    .orderBy('Price_Profit_Id', descending: true)
+                    .where('Fuel_Type_Id', isEqualTo: FuelTypeName)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  return snapshot.hasData
+                      ? new fueltypedatatable(snapshot.data.docs, FuelTypeName)
+                      : Text('No data');
+                }),
           ),
         ],
       ),
@@ -385,52 +440,74 @@ class _FuelInfoState extends State<FuelInfo> {
 }
 
 class fueltypedatatable extends StatelessWidget {
- 
   List list;
   String fuel_name;
-  fueltypedatatable(List list,String fuel_name){this.list=list;this.fuel_name=fuel_name;}
+  fueltypedatatable(List list, String fuel_name) {
+    this.list = list;
+    this.fuel_name = fuel_name;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Expanded(
-        child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
+        child: Expanded(
             child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child:
-              DataTable(
-                columnSpacing:25 ,
-                columns:[ 
-            DataColumn(label: Text("Fuel Type",style: TextStyle(fontSize:21,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("Price",style: TextStyle(fontSize:21,fontWeight: FontWeight.w800),)),
-            DataColumn(label: Text("Profit",style: TextStyle(fontSize:21,fontWeight: FontWeight.w500),)),
-            DataColumn(label: Text("Date",style: TextStyle(fontSize:21,fontWeight: FontWeight.w500),)),
-            
-            ],
-            rows:list.map((pp) => DataRow(
-              cells:[
-                DataCell(
-                   Text('${fuel_name}', style: TextStyle(fontSize:18),),
-                ),
-                DataCell(
-                   Text('${ pp["Official_Price"]}',style: TextStyle(fontSize:18)),
-                ),
-                DataCell(
-                   Text('${  pp["Official_Profit"]}',style: TextStyle(fontSize:18)),
-                ),
-                DataCell(
-                   Text('${ DateTime.tryParse( (pp["Date"]).toDate().toString())}',style: TextStyle(fontSize:18)),
-                ),
-                
-              ] 
-              )).toList(),
-
-              )
-            )
-            
-        )
-
-    ));
+                scrollDirection: Axis.vertical,
+                child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columnSpacing: 25,
+                      columns: [
+                        DataColumn(
+                            label: Text(
+                          "Fuel Type",
+                          style: TextStyle(
+                              fontSize: 21, fontWeight: FontWeight.w800),
+                        )),
+                        DataColumn(
+                            label: Text(
+                          "Price",
+                          style: TextStyle(
+                              fontSize: 21, fontWeight: FontWeight.w800),
+                        )),
+                        DataColumn(
+                            label: Text(
+                          "Profit",
+                          style: TextStyle(
+                              fontSize: 21, fontWeight: FontWeight.w500),
+                        )),
+                        DataColumn(
+                            label: Text(
+                          "Date",
+                          style: TextStyle(
+                              fontSize: 21, fontWeight: FontWeight.w500),
+                        )),
+                      ],
+                      rows: list
+                          .map((pp) => DataRow(cells: [
+                                DataCell(
+                                  Text(
+                                    '${fuel_name}',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                      '${numberFormat.format(pp["Official_Price"])}',
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                                DataCell(
+                                  Text(
+                                      '${numberFormat.format(pp["Official_Profit"])}',
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                                DataCell(
+                                  Text(
+                                      '${DateTime.tryParse((pp["Date"]).toDate().toString())}',
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                              ]))
+                          .toList(),
+                    )))));
   }
 }

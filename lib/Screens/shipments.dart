@@ -4,6 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_petrol_station/services/cloud_services.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/number_symbols_data.dart';
+import 'package:intl/number_symbols.dart';
+import 'package:flutter/services.dart';
+import 'package:pattern_formatter/pattern_formatter.dart';
 
 class Shipments extends StatefulWidget {
   static String id = 'shipments';
@@ -20,6 +24,7 @@ class _ShipmentsState extends State<Shipments> {
       provider_category,
       selected_date,
       note;
+  int add_Volume; // =
 
   String provider_category_details,
       container_category_details,
@@ -30,7 +35,7 @@ class _ShipmentsState extends State<Shipments> {
 
   Timestamp myTimeStamp, myTimeStamp1;
   static int container_id, fuel_type_id, provider_id;
-  DateTime today = DateTime.now();
+
   int volume, shipmentValue, capacity, maxVolume, oldVolume;
   bool IsPaid;
   Timestamp Paid_Date, Shipment_Date, mytimestamp, mytimestamp1;
@@ -47,15 +52,17 @@ class _ShipmentsState extends State<Shipments> {
       valueController = TextEditingController(),
       volumeController = TextEditingController();
 
+  int shipmentToDelete, shipmentBeforeDelete, volumeToBeAdded;
   int fromDateError = 0, toDateError = 0;
   Color colorT = Colors.blueAccent, colorF = Colors.blueAccent;
   String Container_Name, Provider_Name;
 
-  CloudServices cloudServices =
-      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+  int currentContVolume;
+
   final DateTime nn = DateTime.now();
   final DateFormat formatter = DateFormat('dd/MM/yyyy h:mm a');
-  final DateFormat ff = DateFormat('yyyy/MM/dd');
+  DateTime today = DateTime.now();
+  final DateFormat ff = DateFormat('yyyy/MM/dd HH:mm');
   String formatted;
   DateTime Record_Time;
   FirebaseFirestore db = FirebaseFirestore.instance;
@@ -65,6 +72,9 @@ class _ShipmentsState extends State<Shipments> {
       colorP = Colors.blueAccent[100],
       colorD = Colors.blueAccent;
   int dateError = 0;
+  CloudServices cloudServices =
+      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+
   @override
   void initState() {
     super.initState();
@@ -193,7 +203,8 @@ class _ShipmentsState extends State<Shipments> {
   }
 
   void getTotalVolume() async {
-    var c = db.collection('Stations').doc(station).collection('Shipment');
+    totalVolume = 0;
+    //var c = db.collection('Stations').doc(station).collection('Shipment');
     var s = await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
@@ -217,9 +228,10 @@ class _ShipmentsState extends State<Shipments> {
   }
 
   void getDebtMoney() async {
+    totalDebt = 0;
     int tt = 0;
     var c = db.collection('Stations').doc(station).collection('Shipment');
-    var s = await FirebaseFirestore.instance
+    var s = await db
         .collection('Stations')
         .doc(station)
         .collection('Shipment')
@@ -245,6 +257,7 @@ class _ShipmentsState extends State<Shipments> {
 
   void getPaidMoneyFilter(
       String container, String provider, String fromDate, String toDate) async {
+    totalPaidFilter = 0;
     // final DateFormat formatterrr =
     //     DateFormat('''MMMM dd, yyyy 'at' hh:mm:ss a''');
     final DateFormat formatterrr = DateFormat('yyyy/MM/dd');
@@ -295,6 +308,7 @@ class _ShipmentsState extends State<Shipments> {
   final DateFormat formatterrr = DateFormat('yyyy/MM/dd');
   void getDebtMoneyFilter(
       String container, String provider, String fromDate, String toDate) async {
+    totalDebtFilter = 0;
     final fD = ff.parse(fromDate);
     final tD = ff.parse(toDate);
     var c = db.collection('Stations').doc(station).collection('Shipment');
@@ -335,6 +349,7 @@ class _ShipmentsState extends State<Shipments> {
   }
 
   void getPaidMoney() async {
+    totalPaid = 0;
     int total = 0;
     var c = db.collection('Stations').doc(station).collection('Shipment');
     var s = await FirebaseFirestore.instance
@@ -541,14 +556,234 @@ class _ShipmentsState extends State<Shipments> {
   //   });
   // }
 
+  void filter_fct() {
+    print("opnpresseddddd filterrrrrrrrrrrrrrrr");
+    if (container_category_details == null) {
+      print('container null ');
+    }
+    if (provider_category_details == null) {
+      print('provider null ');
+    }
+    if (fromDate == null) {
+      print('fromdate null ');
+      setState(() {
+        fromDateError = 1;
+        colorF = Colors.red;
+      });
+    }
+    if (toDate == null) {
+      print('todate null ');
+      setState(() {
+        toDateError = 1;
+        colorT = Colors.red;
+      });
+    }
+    if (container_category_details != null &&
+        provider_category_details != null &&
+        fromDate != null &&
+        toDate != null) {
+      setState(() {
+        fromDateError = 0;
+        colorF = Colors.blueAccent;
+
+        toDateError = 0;
+        colorT = Colors.blueAccent;
+      });
+      final DateFormat formatterrr =
+          DateFormat('''MMMM dd, yyyy 'at' hh:mm:ss a ''');
+
+      try {
+        DateTime fD = ff.parse(fromDate);
+        DateTime tD = ff.parse(toDate);
+
+        //DateTime fromD = DateTime.parse(fromDate);
+        Timestamp myTimeStamp = Timestamp.fromDate(fD);
+        //DateTime toD = DateTime.parse(toDate);
+        Timestamp myTimeStamp1 = Timestamp.fromDate(tD);
+
+        setState(() {
+          toDateError = 0;
+          colorT = Colors.blueAccent;
+
+          fromDateError = 0;
+          colorF = Colors.blueAccent;
+        });
+        setState(() {
+          toDateError = 0;
+          colorT = Colors.blueAccent;
+
+          fromDateError = 0;
+          colorF = Colors.blueAccent;
+          mytimestamp = Timestamp.fromDate(fD);
+          mytimestamp1 = Timestamp.fromDate(tD);
+          print('myTimeStamppppppppppppppp $mytimestamp');
+          filter = 1;
+          // getDeptMoneyFilter(
+          //     container_category_details,
+          //     provider_category_details,
+          //     fromDate,
+          //     toDate);
+          //
+          // getPaidMoneyFilter(
+          //     container_category_details,
+          //     provider_category_details,
+          //     fromDate,
+          //     toDate);
+        });
+      } catch (e) {
+        setState(() {
+          toDateError = 1;
+          colorT = Colors.red;
+          filter = 0;
+          fromDateError = 1;
+          colorF = Colors.red;
+
+          getDebtMoney();
+          getPaidMoney();
+        });
+      }
+      getIdsDetails();
+      print('filterrrrrrrrrrrrrrrrr');
+      print(container_id_details);
+      print(provider_id_details);
+      getDebtMoneyFilter(container_category_details, provider_category_details,
+          fromDate, toDate);
+      getPaidMoneyFilter(container_category_details, provider_category_details,
+          fromDate, toDate);
+
+      //setState(() {});
+
+    }
+  }
+
+  refresh() async {
+    // setState(() {
+    //   totalDebt = 0;
+    //   totalPaid = 0;
+    //   totalVolume = 0;
+    // });
+    totalDebt = 0;
+    totalPaid = 0;
+    totalVolume = 0;
+
+    print('refreshhhhhhhhhhhhhhhhhhhhhh');
+    int g = 0;
+    await db
+        .collection('Stations')
+        .doc(station)
+        .collection('Shipment')
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  print("lengthhhhhhhhhhh"),
+                  print(val.docs.length),
+                  for (var i = 0; i < val.docs.length; i++)
+                    {
+                      print("Volumeeeeeeeeeeeeeeeeee"),
+                      print(val.docs[i].get("Shipment_Volume")),
+                      g += val.docs[i].get("Shipment_Volume"),
+                    },
+                  setState(() {
+                    totalVolume = g;
+                  }),
+                }
+              else
+                {print("Not Found")},
+              setState(() {}),
+            });
+    int pp = 0;
+    await FirebaseFirestore.instance
+        .collection('Stations')
+        .doc(station)
+        .collection('Shipment')
+        .where('IsPaid', isEqualTo: true)
+        .get()
+        .then((val) => {
+              print(val),
+              if (val.docs.length > 0)
+                {
+                  print("lengthhhhhhhhhhh"),
+                  print(val.docs.length),
+                  for (var i = 0; i < val.docs.length; i++)
+                    {
+                      print("paiddddddddddddddd"),
+                      print(val.docs[i].get("Shipment_Value")),
+                      pp += val.docs[i].get("Shipment_Value"),
+                    },
+                  setState(() {
+                    totalPaid = pp;
+                  }),
+                }
+              else
+                {print("Not Found")},
+              setState(() {}),
+            });
+    int dd = 0;
+    await db
+        .collection('Stations')
+        .doc(station)
+        .collection('Shipment')
+        .where('IsPaid', isEqualTo: false)
+        .get()
+        .then((val) => {
+              print(val),
+              if (val.docs.length > 0)
+                {
+                  print("lengthhhhhhhhhhh"),
+                  print(val.docs.length),
+                  for (var i = 0; i < val.docs.length; i++)
+                    {
+                      print("valueeeeeeeeeeeee"),
+                      print(val.docs[i].get("Shipment_Value")),
+                      dd += val.docs[i].get("Shipment_Value"),
+                    },
+                  setState(() {
+                    totalDebt = dd;
+                  }),
+                }
+              else
+                {print("Not Found")},
+              setState(() {}),
+            });
+    //setState(() {});
+  }
+
+  refreshFilter(
+      String container, String provider, String fromDate, String toDate) async {
+    getPaidMoneyFilter(container, provider, fromDate, toDate);
+    getDebtMoneyFilter(container, provider, fromDate, toDate);
+  }
+
+  NumberFormat numberFormat = new NumberFormat('###,000');
+  NumberSymbols numberFormatSymbols;
   @override
   Widget build(BuildContext context) {
+    numberFormatSymbols = new NumberSymbols(
+      NAME: "zz",
+      DECIMAL_SEP: '.',
+      GROUP_SEP: '\u00A0',
+      PERCENT: '%',
+      ZERO_DIGIT: '0',
+      PLUS_SIGN: '+',
+      MINUS_SIGN: '-',
+      EXP_SYMBOL: 'e',
+      PERMILL: '\u2030',
+      INFINITY: '\u221E',
+      NAN: 'NaN',
+      DECIMAL_PATTERN: '#,##0.###',
+      SCIENTIFIC_PATTERN: '#E0',
+      PERCENT_PATTERN: '#,##0%',
+      CURRENCY_PATTERN: '\u00A4#,##0.00',
+      DEF_CURRENCY_CODE: 'AUD',
+    );
     totalVolume = 0;
     totalDebt = 0;
     totalPaid = 0;
-    getTotalVolume();
+
     getDebtMoney();
     getPaidMoney();
+    getTotalVolume();
     getLastDocId();
 
     print("builddddd $docId");
@@ -906,6 +1141,9 @@ class _ShipmentsState extends State<Shipments> {
                                   TextFormField(
                                       controller: volumeController,
                                       keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        ThousandsFormatter(),
+                                      ],
                                       style: TextStyle(color: Colors.black),
                                       decoration: InputDecoration(
                                         enabledBorder: OutlineInputBorder(
@@ -920,14 +1158,18 @@ class _ShipmentsState extends State<Shipments> {
                                               Radius.circular(15.0)),
                                         ),
                                         labelText: maxVolume.toString() != null
-                                            ? maxVolume.toString()
+                                            ? numberFormat
+                                                .format(maxVolume)
+                                                .toString()
                                             : '',
                                         fillColor: Colors.white,
                                         labelStyle:
                                             TextStyle(color: Colors.black45),
                                       ),
                                       onChanged: (String s) {
-                                        volume = int.parse(s);
+                                        String g =
+                                            s.replaceAll(RegExp(','), '');
+                                        volume = int.parse(g);
                                       }),
                                   Text(
                                     maxVolume == 0
@@ -954,6 +1196,14 @@ class _ShipmentsState extends State<Shipments> {
                         Column(
                           children: <Widget>[
                             TextFormField(
+                                // inputFormatters: [
+                                //   WhitelistingTextInputFormatter.digitsOnly,
+                                //   new LengthLimitingTextInputFormatter(25),
+                                //   new NumberFormatter()
+                                // ],
+                                inputFormatters: [
+                                  ThousandsFormatter(),
+                                ],
                                 controller: valueController,
                                 keyboardType: TextInputType.number,
                                 style: TextStyle(color: Colors.black),
@@ -974,7 +1224,10 @@ class _ShipmentsState extends State<Shipments> {
                                   labelStyle: TextStyle(color: Colors.black45),
                                 ),
                                 onChanged: (String s) {
-                                  shipmentValue = int.parse(s);
+                                  String g = s.replaceAll(RegExp(','), '');
+
+                                  print('valueeeeeeeeees $g');
+                                  shipmentValue = int.parse(g);
                                 }),
                             Text(
                               shipmentValueError == 1
@@ -1104,6 +1357,7 @@ class _ShipmentsState extends State<Shipments> {
                                     IsPaid = false;
                                     Paid_Date = null;
                                   }
+                                  int newVol = (oldVolume + volume);
                                   DateTime ship_date = ff.parse(selected_date);
                                   db
                                       .collection("Stations")
@@ -1127,7 +1381,7 @@ class _ShipmentsState extends State<Shipments> {
                                         .doc(station)
                                         .collection("Container")
                                         .doc(container_id.toString())
-                                        .update({"Volume": oldVolume + volume});
+                                        .update({"Volume": newVol});
                                     noteController.clear();
                                     valueController.clear();
                                     volumeController.clear();
@@ -1403,104 +1657,7 @@ class _ShipmentsState extends State<Shipments> {
                                     color: Colors.white, size: 20)
                               ]),
                           onPressed: () {
-                            print("opnpresseddddd filterrrrrrrrrrrrrrrr");
-                            if (container_category_details == null) {
-                              print('container null ');
-                            }
-                            if (provider_category_details == null) {
-                              print('provider null ');
-                            }
-                            if (fromDate == null) {
-                              print('fromdate null ');
-                              setState(() {
-                                fromDateError = 1;
-                                colorF = Colors.red;
-                              });
-                            }
-                            if (toDate == null) {
-                              print('todate null ');
-                              setState(() {
-                                toDateError = 1;
-                                colorT = Colors.red;
-                              });
-                            }
-                            if (container_category_details != null &&
-                                provider_category_details != null &&
-                                fromDate != null &&
-                                toDate != null) {
-                              setState(() {
-                                fromDateError = 0;
-                                colorF = Colors.blueAccent;
-
-                                toDateError = 0;
-                                colorT = Colors.blueAccent;
-                              });
-                              final DateFormat formatterrr = DateFormat(
-                                  '''MMMM dd, yyyy 'at' hh:mm:ss a ''');
-
-                              try {
-                                DateTime fD = ff.parse(fromDate);
-                                DateTime tD = ff.parse(toDate);
-
-                                //DateTime fromD = DateTime.parse(fromDate);
-                                Timestamp myTimeStamp = Timestamp.fromDate(fD);
-                                //DateTime toD = DateTime.parse(toDate);
-                                Timestamp myTimeStamp1 = Timestamp.fromDate(tD);
-
-                                setState(() {
-                                  toDateError = 0;
-                                  colorT = Colors.blueAccent;
-
-                                  fromDateError = 0;
-                                  colorF = Colors.blueAccent;
-                                });
-                                setState(() {
-                                  toDateError = 0;
-                                  colorT = Colors.blueAccent;
-
-                                  fromDateError = 0;
-                                  colorF = Colors.blueAccent;
-                                  mytimestamp = Timestamp.fromDate(fD);
-                                  mytimestamp1 = Timestamp.fromDate(tD);
-                                  print(
-                                      'myTimeStamppppppppppppppp $mytimestamp');
-                                  filter = 1;
-                                  // getDeptMoneyFilter(
-                                  //     container_category_details,
-                                  //     provider_category_details,
-                                  //     fromDate,
-                                  //     toDate);
-                                  //
-                                  // getPaidMoneyFilter(
-                                  //     container_category_details,
-                                  //     provider_category_details,
-                                  //     fromDate,
-                                  //     toDate);
-                                });
-                              } catch (e) {
-                                setState(() {
-                                  toDateError = 1;
-                                  colorT = Colors.red;
-                                  filter = 0;
-                                  fromDateError = 1;
-                                  colorF = Colors.red;
-
-                                  getDebtMoney();
-                                  getPaidMoney();
-                                });
-                              }
-                              getIdsDetails();
-                              print('filterrrrrrrrrrrrrrrrr');
-                              print(container_id_details);
-                              print(provider_id_details);
-                              getDebtMoneyFilter(container_category_details,
-                                  provider_category_details, fromDate, toDate);
-                              getPaidMoneyFilter(container_category_details,
-                                  provider_category_details, fromDate, toDate);
-
-                              //setState(() {});
-
-                            }
+                            filter_fct();
                           },
                         ),
                       ),
@@ -1525,21 +1682,21 @@ class _ShipmentsState extends State<Shipments> {
                                           children: <Widget>[
                                             Text(
                                                 totalVolume != null
-                                                    ? 'Total Volume : $totalVolume Litters'
+                                                    ? 'Total Volume : ${numberFormat.format(totalVolume)} Litters'
                                                     : 'Total Volume : 0 Litters',
                                                 style: TextStyle(
                                                     fontSize: 24,
                                                     color: Colors.indigo[900])),
                                             Text(
                                                 totalDebt != null
-                                                    ? 'Debt Money : $totalDebt (L.L)'
+                                                    ? 'Debt Money : ${numberFormat.format(totalDebt)} (L.L)'
                                                     : 'Debt Money : 0 (L.L)',
                                                 style: TextStyle(
                                                     fontSize: 24,
                                                     color: Colors.red[500])),
                                             Text(
                                                 totalPaid != null
-                                                    ? 'Total Paid : $totalPaid (L.L)'
+                                                    ? 'Total Paid : ${numberFormat.format(totalPaid)} (L.L)'
                                                     : 'Total Paid : 0 (L.L)',
                                                 style: TextStyle(
                                                     fontSize: 24,
@@ -1576,14 +1733,14 @@ class _ShipmentsState extends State<Shipments> {
                                           children: <Widget>[
                                             Text(
                                                 totalDebtFilter != null
-                                                    ? 'Debt Money : $totalDebtFilter (L.L)'
+                                                    ? 'Debt Money : ${numberFormat.format(totalDebtFilter)} (L.L)'
                                                     : 'Debt Money : 0 (L.L)',
                                                 style: TextStyle(
                                                     fontSize: 24,
                                                     color: Colors.red[500])),
                                             Text(
                                                 totalPaidFilter != null
-                                                    ? 'Total Paid : $totalPaidFilter (L.L)'
+                                                    ? 'Total Paid : ${numberFormat.format(totalPaidFilter)} (L.L)'
                                                     : 'Total Paid : 0 (L.L)',
                                                 style: TextStyle(
                                                     fontSize: 24,
@@ -1631,6 +1788,7 @@ class _ShipmentsState extends State<Shipments> {
                                         return Text('');
                                       } else {
                                         return Column(
+                                          //scrollDirection: Axis.horizontal,
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
@@ -1679,9 +1837,16 @@ class _ShipmentsState extends State<Shipments> {
                                                   bool ISPaid =
                                                       documentSnapshot[
                                                           'IsPaid'];
+                                                  int volume = documentSnapshot[
+                                                      'Shipment_Volume'];
                                                   print(
                                                       'containerrrrrrrrrrrrrrrr $Container_Name');
 
+                                                  //if (index == 1) {
+                                                  //shipmentBeforeDelete =
+                                                  //  documentSnapshot[
+                                                  //    'Shipment_Volume'];
+                                                  //}
                                                   // int provider_Id =
                                                   //     documentSnapshot[
                                                   //         'Provider_Id'];
@@ -1703,14 +1868,16 @@ class _ShipmentsState extends State<Shipments> {
                                                                       .toDate()
                                                                       .toString()))
                                                               .toString()),
-                                                          Text(documentSnapshot[
-                                                                  'Shipment_Volume']
+                                                          Text((numberFormat.format(
+                                                                  documentSnapshot[
+                                                                      'Shipment_Volume']))
                                                               .toString()),
                                                           Text(
                                                               'Container $Container_Name'),
                                                           Text(Provider_Name),
-                                                          Text(documentSnapshot[
-                                                                  'Shipment_Value']
+                                                          Text((numberFormat.format(
+                                                                  documentSnapshot[
+                                                                      'Shipment_Value']))
                                                               .toString()),
                                                           Text(documentSnapshot[
                                                               'Comment']),
@@ -1735,18 +1902,101 @@ class _ShipmentsState extends State<Shipments> {
                                                                       "Paid_Date":
                                                                           Timestamp.fromDate(
                                                                               today)
-                                                                    }).then(
-                                                                            (value) {
+                                                                    }).then((value) {
                                                                       setState(
                                                                           () {
+                                                                        print(
+                                                                            "afterrr updateee payyyyyyyy");
                                                                         ISPaid =
                                                                             true;
+                                                                        // getTotalVolume();
+                                                                        // getPaidMoney();
+                                                                        // getDebtMoney();
                                                                       });
-                                                                    }).catchError(
-                                                                            (onError) {
-                                                                      print(
-                                                                          "error update payyyyyyyy $onError");
+                                                                      refresh();
+                                                                      // int pp =
+                                                                      //     0;
+                                                                      // FirebaseFirestore
+                                                                      //     .instance
+                                                                      //     .collection(
+                                                                      //         'Stations')
+                                                                      //     .doc(
+                                                                      //         station)
+                                                                      //     .collection(
+                                                                      //         'Shipment')
+                                                                      //     .where(
+                                                                      //         'IsPaid',
+                                                                      //         isEqualTo:
+                                                                      //             true)
+                                                                      //     .get()
+                                                                      //     .then((val) =>
+                                                                      //         {
+                                                                      //           print(val),
+                                                                      //           if (val.docs.length > 0)
+                                                                      //             {
+                                                                      //               print("lengthhhhhhhhhhh"),
+                                                                      //               print(val.docs.length),
+                                                                      //               for (var i = 0; i < val.docs.length; i++)
+                                                                      //                 {
+                                                                      //                   print("paiddddddddddddddd"),
+                                                                      //                   print(val.docs[i].get("Shipment_Value")),
+                                                                      //                   pp += val.docs[i].get("Shipment_Value"),
+                                                                      //                 },
+                                                                      //               print("totalllllll paid i pay:  $pp .............. "),
+                                                                      //               setState(() {
+                                                                      //                 totalPaid = pp;
+                                                                      //                 print("totalllllll paid i pay:  $pp .............. $totalPaid");
+                                                                      //               }),
+                                                                      //             }
+                                                                      //           else
+                                                                      //             {
+                                                                      //               print("Not Found")
+                                                                      //             }
+                                                                      //         });
+                                                                      //
+                                                                      // getPaidMoney();
+                                                                      // getDebtMoney();
+                                                                      //refresh();
+                                                                      //   int dd =
+                                                                      //       0;
+                                                                      //   print(
+                                                                      //       "debtttt calculationnnnn");
+                                                                      //   db
+                                                                      //       .collection(
+                                                                      //           'Stations')
+                                                                      //       .doc(
+                                                                      //           station)
+                                                                      //       .collection(
+                                                                      //           'Shipment')
+                                                                      //       .where(
+                                                                      //           'IsPaid',
+                                                                      //           isEqualTo:
+                                                                      //               false)
+                                                                      //       .get()
+                                                                      //       .then((val) =>
+                                                                      //           {
+                                                                      //             print(val),
+                                                                      //             if (val.docs.length > 0)
+                                                                      //               {
+                                                                      //                 print("lengthhhhhhhhhhh"),
+                                                                      //                 print(val.docs.length),
+                                                                      //                 for (var i = 0; i < val.docs.length; i++)
+                                                                      //                   {
+                                                                      //                     print("valueeeeeeeeeeeee"),
+                                                                      //                     print(val.docs[i].get("Shipment_Value")),
+                                                                      //                     dd += val.docs[i].get("Shipment_Value"),
+                                                                      //                   },
+                                                                      //                 setState(() {
+                                                                      //                   totalDebt = dd;
+                                                                      //                 }),
+                                                                      //               }
+                                                                      //           });
+                                                                      // }).catchError(
+                                                                      //         (onError) {
+                                                                      //   print(
+                                                                      //       "error update payyyyyyyy $onError");
                                                                     });
+                                                                    //refresh();
                                                                   },
                                                                   child: Text(
                                                                       'Pay'),
@@ -1776,51 +2026,192 @@ class _ShipmentsState extends State<Shipments> {
                                                                       .toString()
                                                                   : 'not paid'),
                                                           GestureDetector(
-                                                            child: index == 0
-                                                                ? IconButton(
-                                                                    icon: const Icon(
-                                                                        Icons
-                                                                            .delete),
-                                                                    color: Colors
-                                                                        .red,
-                                                                    onPressed:
-                                                                        () {
-                                                                      print(
-                                                                          "Deleteeeeeeeeeeeeeeeee");
-                                                                      int docID =
-                                                                          documentSnapshot[
-                                                                              'Shipment_Id'];
-                                                                      String
-                                                                          docId =
-                                                                          docID
-                                                                              .toString();
-                                                                      db
-                                                                          .collection(
-                                                                              'Stations')
-                                                                          .doc(
-                                                                              station)
-                                                                          .collection(
-                                                                              'Shipment')
-                                                                          .doc(
-                                                                              docId)
-                                                                          .delete()
-                                                                          .then(
-                                                                              (value) {
-                                                                        print(
-                                                                            "deleteddddd");
-                                                                      });
-                                                                    },
-                                                                  )
-                                                                : IconButton(
-                                                                    icon: const Icon(
-                                                                        Icons
-                                                                            .delete),
-                                                                    color: Colors
-                                                                        .white,
-                                                                    onPressed:
-                                                                        () {},
-                                                                  ),
-                                                          ),
+                                                              child: IconButton(
+                                                            icon: const Icon(
+                                                                Icons.delete),
+                                                            color: Colors.red,
+                                                            onPressed: () {
+                                                              // getContainerOldVolume(
+                                                              //   Container_Name);
+                                                              print(
+                                                                  "Deleteeeeeeeeeeeeeeeee");
+                                                              int docID =
+                                                                  documentSnapshot[
+                                                                      'Shipment_Id'];
+                                                              String docId = docID
+                                                                  .toString();
+                                                              showDialog<
+                                                                  String>(
+                                                                context:
+                                                                    context,
+                                                                builder: (BuildContext
+                                                                        context) =>
+                                                                    AlertDialog(
+                                                                  title: const Text(
+                                                                      'DELETE !!!',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.red)),
+                                                                  content:
+                                                                      const Text(
+                                                                          'Are you sure you want to delete ???'),
+                                                                  actions: <
+                                                                      Widget>[
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            'Cancel');
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'Cancel',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.red),
+                                                                      ),
+                                                                    ),
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        //currentContainerVolume;
+                                                                        int containerrr_iddd;
+                                                                        int oldddd_volumeee =
+                                                                            0;
+                                                                        db
+                                                                            .collection('Stations')
+                                                                            .doc(station)
+                                                                            .collection('Shipment')
+                                                                            .doc(docId)
+                                                                            .delete()
+                                                                            .then((value) {
+                                                                          db
+                                                                              .collection('Stations')
+                                                                              .doc(station)
+                                                                              .collection('Container')
+                                                                              .where('Container_Name', isEqualTo: Container_Name)
+                                                                              .get()
+                                                                              .then((val) => {
+                                                                                    if (val.docs.length > 0)
+                                                                                      {
+                                                                                        print("lengthhhhhhhhhhh"),
+                                                                                        print(val.docs.length),
+                                                                                        //for (var i = 0; i < val.docs.length; i++)
+                                                                                        //{
+                                                                                        containerrr_iddd = val.docs[0].get("Container_Id"),
+                                                                                        oldddd_volumeee = val.docs[0].get("Volume"),
+
+                                                                                        print('conttttttt idddddddddddd $containerrr_iddd'),
+                                                                                        print('olddddd volumeeeee $oldddd_volumeee'),
+                                                                                        //},
+
+                                                                                        add_Volume = (oldddd_volumeee - documentSnapshot['Shipment_Volume']), //documentSnapshot['Shipment_Volume'];
+                                                                                        print('adddddddddd volumeeeeeeeee $add_Volume'),
+                                                                                        print('shipmentttt volumeeeeee ${documentSnapshot['Shipment_Volume']}'),
+                                                                                        db.collection('Stations').doc(station).collection('Container').doc(containerrr_iddd.toString()).update({
+                                                                                          'Volume': add_Volume
+                                                                                        }).then((value) {
+                                                                                          // int g = 0;
+                                                                                          // db.collection('Stations').doc(station).collection('Shipment').get().then((val) => {
+                                                                                          //       if (val.docs.length > 0)
+                                                                                          //         {
+                                                                                          //           print("lengthhhhhhhhhhh"),
+                                                                                          //           print(val.docs.length),
+                                                                                          //           for (var i = 0; i < val.docs.length; i++)
+                                                                                          //             {
+                                                                                          //               print("Volumeeeeeeeeeeeeeeeeee"),
+                                                                                          //               print(val.docs[i].get("Shipment_Volume")),
+                                                                                          //               g += val.docs[i].get("Shipment_Volume"),
+                                                                                          //             },
+                                                                                          //           setState(() {
+                                                                                          //             totalVolume = g;
+                                                                                          //           }),
+                                                                                          //         }
+                                                                                          //       else
+                                                                                          //         {print("Not Found")}
+                                                                                          //     });
+
+                                                                                          // int pp = 0;
+                                                                                          // FirebaseFirestore.instance.collection('Stations').doc(station).collection('Shipment').where('IsPaid', isEqualTo: false).where('Container_Name', isEqualTo: Container_Name).where('Provider_Name', isEqualTo: Provider_Name).where('Shipment_Date', isGreaterThanOrEqualTo: myTimeStamp).where('Shipment_Date', isLessThanOrEqualTo: myTimeStamp1).get().then((val) => {
+                                                                                          //       print(val),
+                                                                                          //       if (val.docs.length > 0)
+                                                                                          //         {
+                                                                                          //           print("lengthhhhhhhhhhh"),
+                                                                                          //           print(val.docs.length),
+                                                                                          //           for (var i = 0; i < val.docs.length; i++)
+                                                                                          //             {
+                                                                                          //               print("valueeeeeeeeeeeee"),
+                                                                                          //               print(val.docs[i].get("Shipment_Value")),
+                                                                                          //               pp += val.docs[i].get("Shipment_Value"),
+                                                                                          //             },
+                                                                                          //           setState(() {
+                                                                                          //             totalPaid = pp;
+                                                                                          //           }),
+                                                                                          //         }
+                                                                                          //       else
+                                                                                          //         {print("Not Found")}
+                                                                                          //     });
+                                                                                          //
+                                                                                          // int dd = 0;
+                                                                                          // FirebaseFirestore.instance.collection('Stations').doc(station).collection('Shipment').where('IsPaid', isEqualTo: false).where('Container_Name', isEqualTo: Container_Name).where('Provider_Name', isEqualTo: Provider_Name).where('Shipment_Date', isGreaterThanOrEqualTo: myTimeStamp).where('Shipment_Date', isLessThanOrEqualTo: myTimeStamp1).get().then((val) => {
+                                                                                          //       print(val),
+                                                                                          //       if (val.docs.length > 0)
+                                                                                          //         {
+                                                                                          //           print("lengthhhhhhhhhhh"),
+                                                                                          //           print(val.docs.length),
+                                                                                          //           for (var i = 0; i < val.docs.length; i++)
+                                                                                          //             {
+                                                                                          //               print("valueeeeeeeeeeeee"),
+                                                                                          //               print(val.docs[i].get("Shipment_Value")),
+                                                                                          //               dd += val.docs[i].get("Shipment_Value"),
+                                                                                          //             },
+                                                                                          //           setState(() {
+                                                                                          //             totalDebt = dd;
+                                                                                          //           }),
+                                                                                          //         }
+                                                                                          //       else
+                                                                                          //         {print("Not Found")}
+                                                                                          //     });
+                                                                                          //getPaidMoney();
+                                                                                          //getDebtMoney();
+                                                                                          //refresh();
+
+                                                                                          //setState(() {
+                                                                                          refresh();
+                                                                                          //});
+
+                                                                                          // setState(() {
+                                                                                          //   getDebtMoney();
+                                                                                          //   getPaidMoney();
+                                                                                          //   getTotalVolume();
+                                                                                          // });
+                                                                                        }),
+                                                                                        print("deleteddddd"),
+                                                                                      }
+                                                                                    else
+                                                                                      {
+                                                                                        print("Not Found")
+                                                                                      }
+                                                                                  });
+                                                                          Navigator.pop(
+                                                                              context,
+                                                                              'OK');
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'OK',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.green),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          )),
                                                         ],
                                                       ),
                                                     ],
@@ -1936,14 +2327,16 @@ class _ShipmentsState extends State<Shipments> {
                                                                       .toDate()
                                                                       .toString()))
                                                               .toString()),
-                                                          Text(documentSnapshot[
-                                                                  'Shipment_Volume']
+                                                          Text(numberFormat
+                                                              .format(documentSnapshot[
+                                                                  'Shipment_Volume'])
                                                               .toString()),
                                                           Text(
                                                               'Container $Container_Name'),
                                                           Text(Provider_Name),
-                                                          Text(documentSnapshot[
-                                                                  'Shipment_Value']
+                                                          Text(numberFormat
+                                                              .format(documentSnapshot[
+                                                                  'Shipment_Value'])
                                                               .toString()),
                                                           Text(documentSnapshot[
                                                               'Comment']),
@@ -1974,7 +2367,91 @@ class _ShipmentsState extends State<Shipments> {
                                                                           () {
                                                                         ISPaid =
                                                                             true;
+
+                                                                        //refresh();
+                                                                        //setState(
+                                                                        //     () {
+                                                                        //   getDebtMoney();
+                                                                        //   getPaidMoney();
+                                                                        //   getTotalVolume();
+                                                                        //});
                                                                       });
+                                                                      refreshFilter(
+                                                                          container_category_details,
+                                                                          provider_category_details,
+                                                                          fromDate,
+                                                                          toDate);
+                                                                      //
+                                                                      // int pp =
+                                                                      //     0;
+                                                                      // FirebaseFirestore
+                                                                      //     .instance
+                                                                      //     .collection(
+                                                                      //         'Stations')
+                                                                      //     .doc(
+                                                                      //         station)
+                                                                      //     .collection(
+                                                                      //         'Shipment')
+                                                                      //     .where(
+                                                                      //         'IsPaid',
+                                                                      //         isEqualTo:
+                                                                      //             true)
+                                                                      //     .get()
+                                                                      //     .then((val) =>
+                                                                      //         {
+                                                                      //           print(val),
+                                                                      //           if (val.docs.length > 0)
+                                                                      //             {
+                                                                      //               print("lengthhhhhhhhhhh"),
+                                                                      //               print(val.docs.length),
+                                                                      //               for (var i = 0; i < val.docs.length; i++)
+                                                                      //                 {
+                                                                      //                   print("paiddddddddddddddd"),
+                                                                      //                   print(val.docs[i].get("Shipment_Value")),
+                                                                      //                   pp += val.docs[i].get("Shipment_Value"),
+                                                                      //                 },
+                                                                      //               setState(() {
+                                                                      //                 totalPaidFilter = pp;
+                                                                      //               }),
+                                                                      //             }
+                                                                      //           else
+                                                                      //             {
+                                                                      //               print("Not Found")
+                                                                      //             }
+                                                                      //         });
+                                                                      //
+                                                                      // int dd =
+                                                                      //     0;
+                                                                      // db
+                                                                      //     .collection(
+                                                                      //         'Stations')
+                                                                      //     .doc(
+                                                                      //         station)
+                                                                      //     .collection(
+                                                                      //         'Shipment')
+                                                                      //     .where(
+                                                                      //         'IsPaid',
+                                                                      //         isEqualTo:
+                                                                      //             false)
+                                                                      //     .get()
+                                                                      //     .then((val) =>
+                                                                      //         {
+                                                                      //           print(val),
+                                                                      //           if (val.docs.length > 0)
+                                                                      //             {
+                                                                      //               print("lengthhhhhhhhhhh"),
+                                                                      //               print(val.docs.length),
+                                                                      //               for (var i = 0; i < val.docs.length; i++)
+                                                                      //                 {
+                                                                      //                   print("valueeeeeeeeeeeee"),
+                                                                      //                   print(val.docs[i].get("Shipment_Value")),
+                                                                      //                   dd += val.docs[i].get("Shipment_Value"),
+                                                                      //                 },
+                                                                      //               setState(() {
+                                                                      //                 totalDebtFilter = dd;
+                                                                      //               }),
+                                                                      //             }
+                                                                      //         });
                                                                     }).catchError(
                                                                             (onError) {
                                                                       print(
@@ -2009,51 +2486,170 @@ class _ShipmentsState extends State<Shipments> {
                                                                       .toString()
                                                                   : 'not paid'),
                                                           GestureDetector(
-                                                            child: index == 0
-                                                                ? IconButton(
-                                                                    icon: const Icon(
-                                                                        Icons
-                                                                            .delete),
-                                                                    color: Colors
-                                                                        .red,
-                                                                    onPressed:
-                                                                        () {
-                                                                      print(
-                                                                          "Deleteeeeeeeeeeeeeeeee");
-                                                                      int docID =
-                                                                          documentSnapshot[
-                                                                              'Shipment_Id'];
-                                                                      String
-                                                                          docId =
-                                                                          docID
-                                                                              .toString();
-                                                                      db
-                                                                          .collection(
-                                                                              'Stations')
-                                                                          .doc(
-                                                                              station)
-                                                                          .collection(
-                                                                              'Shipment')
-                                                                          .doc(
-                                                                              docId)
-                                                                          .delete()
-                                                                          .then(
-                                                                              (value) {
-                                                                        print(
-                                                                            "deleteddddd");
-                                                                      });
-                                                                    },
-                                                                  )
-                                                                : IconButton(
-                                                                    icon: const Icon(
-                                                                        Icons
-                                                                            .delete),
-                                                                    color: Colors
-                                                                        .white,
-                                                                    onPressed:
-                                                                        () {},
-                                                                  ),
-                                                          ),
+                                                              child: IconButton(
+                                                            icon: const Icon(
+                                                                Icons.delete),
+                                                            color: Colors.red,
+                                                            onPressed: () {
+                                                              print(
+                                                                  "Deleteeeeeeeeeeeeeeeee");
+                                                              int docID =
+                                                                  documentSnapshot[
+                                                                      'Shipment_Id'];
+                                                              String docId = docID
+                                                                  .toString();
+                                                              showDialog<
+                                                                  String>(
+                                                                context:
+                                                                    context,
+                                                                builder: (BuildContext
+                                                                        context) =>
+                                                                    AlertDialog(
+                                                                  title: const Text(
+                                                                      'DELETE !!!',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.red)),
+                                                                  content:
+                                                                      const Text(
+                                                                          'Are you sure you want to delete ???'),
+                                                                  actions: <
+                                                                      Widget>[
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            'Cancel');
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'Cancel',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.red),
+                                                                      ),
+                                                                    ),
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        int containerrr_iddd;
+                                                                        int oldddd_volumeee =
+                                                                            0;
+                                                                        db
+                                                                            .collection('Stations')
+                                                                            .doc(station)
+                                                                            .collection('Shipment')
+                                                                            .doc(docId)
+                                                                            .delete()
+                                                                            .then((value) {
+                                                                          db
+                                                                              .collection('Stations')
+                                                                              .doc(station)
+                                                                              .collection('Container')
+                                                                              .where('Container_Name', isEqualTo: Container_Name)
+                                                                              .get()
+                                                                              .then((val) => {
+                                                                                    if (val.docs.length > 0)
+                                                                                      {
+                                                                                        print("lengthhhhhhhhhhh"),
+                                                                                        print(val.docs.length),
+                                                                                        //for (var i = 0; i < val.docs.length; i++)
+                                                                                        //{
+                                                                                        containerrr_iddd = val.docs[0].get("Container_Id"),
+                                                                                        oldddd_volumeee = val.docs[0].get("Volume"),
+
+                                                                                        print('conttttttt idddddddddddd $containerrr_iddd'),
+                                                                                        print('olddddd volumeeeee $oldddd_volumeee'),
+                                                                                        //},
+
+                                                                                        add_Volume = oldddd_volumeee - documentSnapshot['Shipment_Volume'],
+                                                                                        print('adddddddddd volumeeeeeeeee $add_Volume'),
+                                                                                        print('shipmentttt volumeeeeee ${documentSnapshot['Shipment_Volume']}'),
+                                                                                        db.collection('Stations').doc(station).collection('Container').doc(containerrr_iddd.toString()).update({
+                                                                                          'Volume': add_Volume
+                                                                                        }).then((value) {
+                                                                                          //setState(() {
+                                                                                          //getDebtMoney();
+                                                                                          //getPaidMoney();
+                                                                                          //getTotalVolume();
+                                                                                          //});
+                                                                                          // setState(() {
+                                                                                          refreshFilter(container_category_details, provider_category_details, fromDate, toDate);
+
+                                                                                          //});
+
+                                                                                          //   int pp = 0;
+                                                                                          //   FirebaseFirestore.instance.collection('Stations').doc(station).collection('Shipment').where('IsPaid', isEqualTo: true).get().then((val) => {
+                                                                                          //         print(val),
+                                                                                          //         if (val.docs.length > 0)
+                                                                                          //           {
+                                                                                          //             print("lengthhhhhhhhhhh"),
+                                                                                          //             print(val.docs.length),
+                                                                                          //             for (var i = 0; i < val.docs.length; i++)
+                                                                                          //               {
+                                                                                          //                 print("paiddddddddddddddd"),
+                                                                                          //                 print(val.docs[i].get("Shipment_Value")),
+                                                                                          //                 pp += val.docs[i].get("Shipment_Value"),
+                                                                                          //               },
+                                                                                          //             setState(() {
+                                                                                          //               totalPaidFilter = pp;
+                                                                                          //             }),
+                                                                                          //           }
+                                                                                          //         else
+                                                                                          //           {print("Not Found")}
+                                                                                          //       });
+                                                                                          //
+                                                                                          //   int dd = 0;
+                                                                                          //   db.collection('Stations').doc(station).collection('Shipment').where('IsPaid', isEqualTo: false).get().then((val) => {
+                                                                                          //         print(val),
+                                                                                          //         if (val.docs.length > 0)
+                                                                                          //           {
+                                                                                          //             print("lengthhhhhhhhhhh"),
+                                                                                          //             print(val.docs.length),
+                                                                                          //             for (var i = 0; i < val.docs.length; i++)
+                                                                                          //               {
+                                                                                          //                 print("valueeeeeeeeeeeee"),
+                                                                                          //                 print(val.docs[i].get("Shipment_Value")),
+                                                                                          //                 dd += val.docs[i].get("Shipment_Value"),
+                                                                                          //               },
+                                                                                          //             setState(() {
+                                                                                          //               totalDebtFilter = dd;
+                                                                                          //             }),
+                                                                                          //           }
+                                                                                          //       });
+                                                                                        }),
+
+                                                                                        //getPaidMoney(),
+                                                                                        //getDebtMoney(),
+
+                                                                                        //refresh(),
+
+                                                                                        print("deleteddddd"),
+                                                                                      }
+                                                                                    else
+                                                                                      {
+                                                                                        print("Not Found")
+                                                                                      }
+                                                                                  });
+                                                                          Navigator.pop(
+                                                                              context,
+                                                                              'OK');
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          const Text(
+                                                                        'OK',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.green),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          )),
                                                         ],
                                                       ),
                                                     ],
@@ -2080,6 +2676,50 @@ class _ShipmentsState extends State<Shipments> {
     );
   }
 }
+
+//Custom InputFormatter
+class NumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var text = newValue.text;
+
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    var buffer = new StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      var nonZeroIndex = i + 1;
+      print(text.length);
+
+      if (nonZeroIndex == 1) {
+        buffer.write(','); // Add double spaces.
+      } else {
+        if (nonZeroIndex == 4) {
+          print("non");
+          print(nonZeroIndex);
+          if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
+            buffer.write(','); // Add double spaces.
+          }
+        } else {
+          if (nonZeroIndex != 3 &&
+              nonZeroIndex % 3 == 1 &&
+              nonZeroIndex != text.length) {
+            buffer.write(','); // Add double spaces.
+          }
+        }
+      }
+    }
+
+    var string = buffer.toString();
+    return newValue.copyWith(
+        text: string,
+        selection: new TextSelection.collapsed(offset: string.length));
+  }
+}
+
 //
 // else {
 // //filter shipments records

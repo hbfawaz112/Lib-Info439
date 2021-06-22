@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_petrol_station/services/cloud_services.dart';
 import 'package:flutter_petrol_station/models/Pump_Record.dart';
 import 'package:intl/intl.dart';
+import 'package:pattern_formatter/numeric_formatter.dart';
+import 'package:intl/number_symbols.dart';
 
 String station;
 
@@ -222,9 +224,30 @@ class _PumpsState extends State<Pump_Records> {
 
   //     .snapshots();
   // qs.then((value) => previousCounter = value.docs.last.data()['Record']);
+  NumberFormat numberFormat = new NumberFormat('###,000');
+  NumberSymbols numberFormatSymbols;
 
   @override
   Widget build(BuildContext context) {
+    numberFormatSymbols = new NumberSymbols(
+      NAME: "zz",
+      DECIMAL_SEP: '.',
+      GROUP_SEP: '\u00A0',
+      PERCENT: '%',
+      ZERO_DIGIT: '0',
+      PLUS_SIGN: '+',
+      MINUS_SIGN: '-',
+      EXP_SYMBOL: 'e',
+      PERMILL: '\u2030',
+      INFINITY: '\u221E',
+      NAN: 'NaN',
+      DECIMAL_PATTERN: '#,##0.###',
+      SCIENTIFIC_PATTERN: '#E0',
+      PERCENT_PATTERN: '#,##0%',
+      CURRENCY_PATTERN: '\u00A4#,##0.00',
+      DEF_CURRENCY_CODE: 'AUD',
+    );
+
     // final Map<String, Object> received_data =
     //     ModalRoute.of(context).settings.arguments;
     // pump_id = received_data["pump_id"];
@@ -355,6 +378,9 @@ class _PumpsState extends State<Pump_Records> {
                     children: <Widget>[
                       TextFormField(
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            ThousandsFormatter(),
+                          ],
                           controller: msgController,
                           style: TextStyle(color: Colors.black),
                           decoration: InputDecoration(
@@ -369,15 +395,18 @@ class _PumpsState extends State<Pump_Records> {
                                   BorderRadius.all(Radius.circular(32.0)),
                             ),
                             labelText: previousCounter != null
-                                ? previousCounter.toString()
+                                ? numberFormat
+                                    .format(previousCounter)
+                                    .toString()
                                 : '',
                             fillColor: Colors.white,
                             labelStyle: TextStyle(color: Colors.black45),
                           ),
                           onChanged: (value) {
-                            setState(() {
-                              newCounter = int.parse(value);
-                            });
+                            String g = value.replaceAll(RegExp(','), '');
+                            //setState(() {
+                            newCounter = int.parse(g);
+                            //});
                           }),
                       Text(
                         recordError == 1
@@ -409,7 +438,9 @@ class _PumpsState extends State<Pump_Records> {
                           padding: EdgeInsets.all(8),
                           child: Text(
                               previousCounter != null
-                                  ? previousCounter.toString()
+                                  ? numberFormat
+                                      .format(previousCounter)
+                                      .toString()
                                   : '',
                               style: TextStyle(
                                   fontSize: 18,
@@ -745,7 +776,9 @@ class _PumpsState extends State<Pump_Records> {
                                                                 .toDate()
                                                                 .toString())))
                                                     : ''),
-                                                Text(documentSnapshot['Record']
+                                                Text(numberFormat
+                                                    .format(documentSnapshot[
+                                                        'Record'])
                                                     .toString()),
                                                 GestureDetector(
                                                   child: index == 0

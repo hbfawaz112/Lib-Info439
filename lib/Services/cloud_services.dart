@@ -8,9 +8,7 @@ class CloudServices {
   final _auth;
 
   CloudServices(this._firestore, this._auth);
-
   get auth => _auth;
-
   get firestore => _firestore;
 
   User getCurrentUser() {

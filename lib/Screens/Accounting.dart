@@ -20,25 +20,25 @@ class _AccountingState extends State<Accounting> {
   int button_type = -1;
   bool isloading = false;
 
-int previous_record_id;
+  int previous_record_id;
   int contid; // for get the container id for specific pump
   String contname; //get container
   int calculationprofit, calculationprice;
   Fuel F;
- int previous_record;
+  int previous_record;
   int idob;
   String nameob;
   var fuel_types;
   int pumpidtdy;
 
   DateTime lastpricedate, lastprofitdate;
-  DateTime datetimetoday= DateTime.now();
+  DateTime datetimetoday = DateTime.now();
   DateFormat ff;
-  DateTime todayy ;
+  DateTime todayy;
   int container_id_tdy;
-  int totalbilltdy=0,totalprofittoday=0;
-   int lastpricetdy,lastprofittdy;
-  
+  int totalbilltdy = 0, totalprofittoday = 0;
+  int lastpricetdy, lastprofittdy;
+
   void getlastreacord() async {
     setState(() {
       isloading = true;
@@ -202,190 +202,242 @@ int previous_record_id;
   }
 
   void gettoday() async {
+    totalbilltdy = 0;
+    totalprofittoday = 0;
     int cont_id;
     String cont_name;
     if (dropdownValue == "All Fuel Type") {
-      await   FirebaseFirestore.instance.collection('Stations')
-          .doc("Petrol Station 1")
-          .collection('Container').get().then((val) async =>{
-              if(val.docs.length>0){
-                  for(int k=0;k<val.docs.length;k++){
-                cont_id = val.docs[k].get("Container_Id"),
-                cont_name = val.docs[k].get("Container_Name"),
-
-                    
-                              await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('Stations')
           .doc("Petrol Station 1")
-          .collection('Price-Profit')
-          .where('Fuel_Type_Id', isEqualTo: cont_name)
-          .orderBy('Date', descending: true)
+          .collection('Container')
           .get()
           .then((val) async => {
                 if (val.docs.length > 0)
                   {
-                    lastpricetdy = val.docs[0].get("Official_Price"),
-                    lastprofittdy = val.docs[0].get("Official_Profit"),
-                    
-                    lastpricedate =  DateTime.tryParse((val.docs[0].get("Date")).toDate().toString()),
-                      print('Dateeeeeeeeeeeeee ${lastpricedate}'),
-                      print('priceeeeeee ${lastpricetdy}'),
-                      print('profittttt ${lastprofittdy}'),
-                      
-                      if(lastpricedate.day ==datetimetoday.day && lastpricedate.month ==datetimetoday.month && lastpricedate.year ==datetimetoday.year )
+                    for (int k = 0; k < val.docs.length; k++)
                       {
-                            
+                        cont_id = val.docs[k].get("Container_Id"),
+                        cont_name = val.docs[k].get("Container_Name"),
                         await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Pump')
-                        .where('Container_Id', isEqualTo: cont_id)
-                        .get()
-                        .then((val) async => {
-                            if(val.docs.length>0){
-                              for(int i=0;i<val.docs.length;i++){
-                               pumpidtdy =val.docs[i].get("Pump_Id"),
-                                //get pump record 
-                                  await FirebaseFirestore.instance
-                                                          .collection('Stations')
-                                                          .doc("Petrol Station 1")
-                                                          .collection('Pump_Record')
-                                                          .where("Pump_Id", isEqualTo:pumpidtdy)
-                                                          .where("Record_Time" , isGreaterThanOrEqualTo:lastpricedate)
-                                                          .get().then((val)  async => {
-                                                            if(val.docs.length>0){
-                                                             
-                                                                  for(int j=0;j<val.docs.length;j++){
-                                                                      
-                                                                      if(val.docs[j].get("Pump_Record_Id")==1){
-                                                                        totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
-                                                                    totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
-                                                                   print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"), 
-                                                                     }
-                                                                     else{
-
-                                                                        await FirebaseFirestore.instance.collection("Stations")
-                                                                    .doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id",isEqualTo: pumpidtdy)
-                                                                    .where("Container_Id",isEqualTo: cont_id).orderBy("Pump_Record_Id").get()
-                                                                    .then((val1) => {
-
-                                                                        if(val1.docs.length>0){
-                                                                          if(val1.docs.length>1){
-                                                                        previous_record_id = val1.docs[val1.docs.length-2].get("Pump_Record_Id"),
-                                                                        print("previous idddd ${previous_record_id}"),
-                                                                        previous_record = val1.docs[val1.docs.length-2].get("Record"),
-                                                                        print("previous record ${previous_record}"),
-                                                                      
-                                                                        totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") -previous_record )  * lastpricetdy),
-                                                                      
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record") -previous_record ) * lastprofittdy),
-                                                                             print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"),                                                                     
-                                                                          }
-                                                                          else{
-                                                                                           totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") )  * lastpricetdy),
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record")) * lastprofittdy),
-                                                                              print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"),             
-                                                                          }
-                                                                        }
-                                                                    }),                     
-                                                                      
-                                                                     }
-                                                                 
-
-                                                                    
-                                                                  }
-                                                            }
-                                                          }),
-                                     
-                              }
-                            }
-                        })
-                        },
-                          
-
-                      
-                      
-
+                            .collection('Stations')
+                            .doc("Petrol Station 1")
+                            .collection('Price-Profit')
+                            .where('Fuel_Type_Id', isEqualTo: cont_name)
+                            .orderBy('Date', descending: true)
+                            .get()
+                            .then((val) async => {
+                                  if (val.docs.length > 0)
+                                    {
+                                      lastpricetdy =
+                                          val.docs[0].get("Official_Price"),
+                                      lastprofittdy =
+                                          val.docs[0].get("Official_Profit"),
+                                      lastpricedate = DateTime.tryParse(
+                                          (val.docs[0].get("Date"))
+                                              .toDate()
+                                              .toString()),
+                                      print(
+                                          'Dateeeeeeeeeeeeee ${lastpricedate}'),
+                                      print('priceeeeeee ${lastpricetdy}'),
+                                      print('profittttt ${lastprofittdy}'),
+                                      if (lastpricedate.day ==
+                                              datetimetoday.day &&
+                                          lastpricedate.month ==
+                                              datetimetoday.month &&
+                                          lastpricedate.year ==
+                                              datetimetoday.year)
+                                        {
+                                          print("if todayyyyyyyyyyy"),
+                                          await FirebaseFirestore.instance
+                                              .collection('Stations')
+                                              .doc("Petrol Station 1")
+                                              .collection('Pump')
+                                              .where('Container_Id',
+                                                  isEqualTo: cont_id)
+                                              .get()
+                                              .then((val) async => {
+                                                    if (val.docs.length > 0)
+                                                      {
+                                                        for (int i = 0;
+                                                            i < val.docs.length;
+                                                            i++)
+                                                          {
+                                                            pumpidtdy = val
+                                                                .docs[i]
+                                                                .get("Pump_Id"),
+                                                            //get pump record
+                                                            await FirebaseFirestore
+                                                                .instance
+                                                                .collection(
+                                                                    'Stations')
+                                                                .doc(
+                                                                    "Petrol Station 1")
+                                                                .collection(
+                                                                    'Pump_Record')
+                                                                .where(
+                                                                    "Pump_Id",
+                                                                    isEqualTo:
+                                                                        pumpidtdy)
+                                                                .where(
+                                                                    "Record_Time",
+                                                                    isGreaterThanOrEqualTo:
+                                                                        lastpricedate)
+                                                                .get()
+                                                                .then(
+                                                                    (val) async =>
+                                                                        {
+                                                                          if (val.docs.length >
+                                                                              0)
+                                                                            {
+                                                                              for (int j = 0; j < val.docs.length; j++)
+                                                                                {
+                                                                                  if (val.docs[j].get("Pump_Record_Id") == 1)
+                                                                                    {
+                                                                                      totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
+                                                                                      totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
+                                                                                      print("Torla billll a ${totalbilltdy}"),
+                                                                                      print("Torla profittt a ${totalprofittoday}"),
+                                                                                    }
+                                                                                  else
+                                                                                    {
+                                                                                      await FirebaseFirestore.instance.collection("Stations").doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id", isEqualTo: pumpidtdy).where("Container_Id", isEqualTo: cont_id).orderBy("Pump_Record_Id").get().then((val1) => {
+                                                                                            if (val1.docs.length > 0)
+                                                                                              {
+                                                                                                if (val1.docs.length > 1)
+                                                                                                  {
+                                                                                                    previous_record_id = val1.docs[val1.docs.length - 2].get("Pump_Record_Id"),
+                                                                                                    print("previous idddd ${previous_record_id}"),
+                                                                                                    previous_record = val1.docs[val1.docs.length - 2].get("Record"),
+                                                                                                    print("previous record ${previous_record}"),
+                                                                                                    totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * lastpricetdy),
+                                                                                                    totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * lastprofittdy),
+                                                                                                    print("Torla billll a ${totalbilltdy}"),
+                                                                                                    print("Torla profittt a ${totalprofittoday}"),
+                                                                                                  }
+                                                                                                else
+                                                                                                  {
+                                                                                                    totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * lastpricetdy),
+                                                                                                    totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * lastprofittdy),
+                                                                                                    print("Torla billll a ${totalbilltdy}"),
+                                                                                                    print("Torla profittt a ${totalprofittoday}"),
+                                                                                                  }
+                                                                                              }
+                                                                                          }),
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }),
+                                                          }
+                                                      }
+                                                  })
+                                        }
+                                      else
+                                        {
+                                          print(
+                                              "Esleeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+                                          await FirebaseFirestore.instance
+                                              .collection('Stations')
+                                              .doc("Petrol Station 1")
+                                              .collection('Pump')
+                                              .where('Container_Id',
+                                                  isEqualTo: cont_id)
+                                              .get()
+                                              .then((val) async => {
+                                                    if (val.docs.length > 0)
+                                                      {
+                                                        print(
+                                                            "iff length >0 pump container id"),
+                                                        for (int i = 0;
+                                                            i < val.docs.length;
+                                                            i++)
+                                                          {
+                                                            pumpidtdy = val
+                                                                .docs[i]
+                                                                .get("Pump_Id"),
+                                                            //get pump record
+                                                            await FirebaseFirestore
+                                                                .instance
+                                                                .collection(
+                                                                    'Stations')
+                                                                .doc(
+                                                                    "Petrol Station 1")
+                                                                .collection(
+                                                                    'Pump_Record')
+                                                                .where(
+                                                                    "Pump_Id",
+                                                                    isEqualTo:
+                                                                        pumpidtdy)
+                                                                .where(
+                                                                    "Record_Time",
+                                                                    isGreaterThanOrEqualTo:
+                                                                        lastpricedate)
+                                                                .where(
+                                                                    "Record_Time",
+                                                                    isGreaterThanOrEqualTo:
+                                                                        todayy)
+                                                                .get()
+                                                                .then(
+                                                                    (val) async =>
+                                                                        {
+                                                                          if (val.docs.length >
+                                                                              0)
+                                                                            {
+                                                                              print('if length > 0  record > today'),
+                                                                              for (int j = 0; j < val.docs.length; j++)
+                                                                                {
+                                                                                  if (val.docs[j].get("Pump_Record_Id") == 1)
+                                                                                    {
+                                                                                      totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
+                                                                                      totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
+                                                                                      print("Torla billll a ${totalbilltdy}"),
+                                                                                      print("Torla profittt a ${totalprofittoday}"),
+                                                                                    }
+                                                                                  else
+                                                                                    {
+                                                                                      await FirebaseFirestore.instance.collection("Stations").doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id", isEqualTo: pumpidtdy).where("Container_Id", isEqualTo: contid).orderBy("Pump_Record_Id").get().then((val1) => {
+                                                                                            if (val1.docs.length > 0)
+                                                                                              {
+                                                                                                if (val1.docs.length > 1)
+                                                                                                  {
+                                                                                                    previous_record_id = val1.docs[val1.docs.length - 2].get("Pump_Record_Id"),
+                                                                                                    print("previous idddd ${previous_record_id}"),
+                                                                                                    previous_record = val1.docs[val1.docs.length - 2].get("Record"),
+                                                                                                    print("previous record ${previous_record}"),
+                                                                                                    totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * lastpricetdy),
+                                                                                                    totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * lastprofittdy),
+                                                                                                    print("Torla billll a ${totalbilltdy}"),
+                                                                                                    print("Torla profittt a ${totalprofittoday}"),
+                                                                                                  }
+                                                                                                else
+                                                                                                  {
+                                                                                                    totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * lastpricetdy),
+                                                                                                    totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * lastprofittdy),
+                                                                                                    print("Torla billll a ${totalbilltdy}"),
+                                                                                                    print("Torla profittt a ${totalprofittoday}"),
+                                                                                                  }
+                                                                                              }
+                                                                                          }),
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }),
+                                                          }
+                                                      }
+                                                  }),
+                                        },
+                                    }
+                                })
+                      }
                   }
-                  else{
-                    await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Pump')
-                        .where('Container_Id', isEqualTo: cont_id)
-                        .get()
-                        .then((val) async => {
-                            if(val.docs.length>0){
-                              for(int i=0;i<val.docs.length;i++){
-                               pumpidtdy =val.docs[i].get("Pump_Id"),
-                                //get pump record 
-                                  await FirebaseFirestore.instance
-                                                          .collection('Stations')
-                                                          .doc("Petrol Station 1")
-                                                          .collection('Pump_Record')
-                                                          .where("Pump_Id", isEqualTo:pumpidtdy)
-                                                          .where("Record_Time" , isGreaterThanOrEqualTo:lastpricedate)
-                                                          .where("Record_Time" ,isGreaterThanOrEqualTo:todayy  )
-                                                          .get().then((val) async => {
-                                                            if(val.docs.length>0){
-                                                                  for(int j=0;j<val.docs.length;j++){
-                                                                 
-                                                                 if(val.docs[j].get("Pump_Record_Id")==1){
-                                                                        totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
-                                                                    totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
-                                                                   print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"), 
-                                                                     }
-                                                                     else{
+              });
+      print('TOTAL BILL TODAYYY ${totalbilltdy}');
+      print('TOTAL profit TODAYYY ${totalprofittoday}');
+    } else {
+      totalbilltdy = 0;
+      totalprofittoday = 0;
 
-                                                                        await FirebaseFirestore.instance.collection("Stations")
-                                                                    .doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id",isEqualTo: pumpidtdy)
-                                                                    .where("Container_Id",isEqualTo: contid).orderBy("Pump_Record_Id").get()
-                                                                    .then((val1) => {
-
-                                                                        if(val1.docs.length>0){
-                                                                          if(val1.docs.length>1){
-                                                                        previous_record_id = val1.docs[val1.docs.length-2].get("Pump_Record_Id"),
-                                                                        print("previous idddd ${previous_record_id}"),
-                                                                        previous_record = val1.docs[val1.docs.length-2].get("Record"),
-                                                                        print("previous record ${previous_record}"),
-                                                                      
-                                                                        totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") -previous_record )  * lastpricetdy),
-                                                                      
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record") -previous_record ) * lastprofittdy),
-                                                                    print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"), 
-                                                                          }
-                                                                          else{
-                                                                                           totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") )  * lastpricetdy),
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record")) * lastprofittdy),
-                                                                               print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"),            
-                                                                          }
-                                                                        }
-                                                                    }),                     
-                                                                      
-                                                                     }
-                                                                 
-                                                                    
-                                                                  }
-                                                            }
-                                                          }),
-
-                              }
-                            }
-                        }),
-                   
-                  },
-                     
-          }
-          
-          )
-
-
-                  }
-              }
-          });
-                                print('TOTAL BILL TODAYYY ${totalbilltdy}');
-                      print('TOTAL profit TODAYYY ${totalprofittoday}');
-    } else {   /// specfic fuel
+      /// specfic fuel
       //get date of the last price
       await FirebaseFirestore.instance
           .collection('Stations')
@@ -399,192 +451,230 @@ int previous_record_id;
                   {
                     lastpricetdy = val.docs[0].get("Official_Price"),
                     lastprofittdy = val.docs[0].get("Official_Profit"),
-                    
-                    lastpricedate =  DateTime.tryParse((val.docs[0].get("Date")).toDate().toString()),
-                      print('Dateeeeeeeeeeeeee ${lastpricedate}'),
-                      print('priceeeeeee ${lastpricetdy}'),
-                      print('profittttt ${lastprofittdy}'),
-                      
-                      if(lastpricedate.day ==datetimetoday.day && lastpricedate.month ==datetimetoday.month && lastpricedate.year ==datetimetoday.year )
+                    lastpricedate = DateTime.tryParse(
+                        (val.docs[0].get("Date")).toDate().toString()),
+                    print('Dateeeeeeeeeeeeee ${lastpricedate}'),
+                    print('priceeeeeee ${lastpricetdy}'),
+                    print('profittttt ${lastprofittdy}'),
+                    if (lastpricedate.day == datetimetoday.day &&
+                        lastpricedate.month == datetimetoday.month &&
+                        lastpricedate.year == datetimetoday.year)
                       {
                         //get container id where
-                         await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Container')
-                        .where('Container_Name', isEqualTo: dropdownValue)
-                        .get()
-                        .then((val) async => {
-                          if(val.docs.length>0){
-                          container_id_tdy = val.docs[val.docs.length-1].get("Container_Id"),
-                                        // now get pump where containerid
-                               await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Pump')
-                        .where('Container_Id', isEqualTo: container_id_tdy)
-                        .get()
-                        .then((val) async => {
-                            if(val.docs.length>0){
-                              for(int i=0;i<val.docs.length;i++){
-                               pumpidtdy =val.docs[i].get("Pump_Id"),
-                                //get pump record 
-                                  await FirebaseFirestore.instance
-                                                          .collection('Stations')
-                                                          .doc("Petrol Station 1")
-                                                          .collection('Pump_Record')
-                                                          .where("Pump_Id", isEqualTo:pumpidtdy)
-                                                          .where("Record_Time" , isGreaterThanOrEqualTo:lastpricedate)
-                                                          .get().then((val) async => {
-                                                            if(val.docs.length>0){
-                                                                  for(int j=0;j<val.docs.length;j++){
-                                                                     if(val.docs[j].get("Pump_Record_Id")==1){
-                                                                        totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
-                                                                    totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
-                                                                   print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"), 
-                                                                     }
-                                                                     else{
-
-                                                                        await FirebaseFirestore.instance.collection("Stations")
-                                                                    .doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id",isEqualTo: pumpidtdy)
-                                                                    .where("Container_Id",isEqualTo: container_id_tdy).orderBy("Pump_Record_Id").get()
-                                                                    .then((val1) => {
-
-                                                                        if(val1.docs.length>0){
-                                                                          if(val1.docs.length>1){
-                                                                        previous_record_id = val1.docs[val1.docs.length-2].get("Pump_Record_Id"),
-                                                                        print("previous idddd ${previous_record_id}"),
-                                                                        previous_record = val1.docs[val1.docs.length-2].get("Record"),
-                                                                        print("previous record ${previous_record}"),
-                                                                      print('val.docs[j].get("Record") ${val.docs[j].get("Record")}'),
-                                                                      
-                                                                        totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") -previous_record )  * lastpricetdy),
-                                                                      
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record") -previous_record ) * lastprofittdy),
-                                                                    print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"), 
-                                                                          }
-                                                                          else{
-                                                                                           totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") )  * lastpricetdy),
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record")) * lastprofittdy),
-                                                                              print("Torla billll a ${totalbilltdy}"),   print("Torla profittt a ${totalprofittoday}"),             
-                                                                          }
+                        await FirebaseFirestore.instance
+                            .collection('Stations')
+                            .doc("Petrol Station 1")
+                            .collection('Container')
+                            .where('Container_Name', isEqualTo: dropdownValue)
+                            .get()
+                            .then((val) async => {
+                                  if (val.docs.length > 0)
+                                    {
+                                      container_id_tdy = val
+                                          .docs[val.docs.length - 1]
+                                          .get("Container_Id"),
+                                      // now get pump where containerid
+                                      await FirebaseFirestore.instance
+                                          .collection('Stations')
+                                          .doc("Petrol Station 1")
+                                          .collection('Pump')
+                                          .where('Container_Id',
+                                              isEqualTo: container_id_tdy)
+                                          .get()
+                                          .then((val) async => {
+                                                if (val.docs.length > 0)
+                                                  {
+                                                    for (int i = 0;
+                                                        i < val.docs.length;
+                                                        i++)
+                                                      {
+                                                        pumpidtdy = val.docs[i]
+                                                            .get("Pump_Id"),
+                                                        //get pump record
+                                                        await FirebaseFirestore
+                                                            .instance
+                                                            .collection(
+                                                                'Stations')
+                                                            .doc(
+                                                                "Petrol Station 1")
+                                                            .collection(
+                                                                'Pump_Record')
+                                                            .where("Pump_Id",
+                                                                isEqualTo:
+                                                                    pumpidtdy)
+                                                            .where(
+                                                                "Record_Time",
+                                                                isGreaterThanOrEqualTo:
+                                                                    lastpricedate)
+                                                            .get()
+                                                            .then(
+                                                                (val) async => {
+                                                                      if (val.docs
+                                                                              .length >
+                                                                          0)
+                                                                        {
+                                                                          for (int j = 0;
+                                                                              j < val.docs.length;
+                                                                              j++)
+                                                                            {
+                                                                              if (val.docs[j].get("Pump_Record_Id") == 1)
+                                                                                {
+                                                                                  totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
+                                                                                  totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
+                                                                                  print("Torla billll a ${totalbilltdy}"),
+                                                                                  print("Torla profittt a ${totalprofittoday}"),
+                                                                                }
+                                                                              else
+                                                                                {
+                                                                                  await FirebaseFirestore.instance.collection("Stations").doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id", isEqualTo: pumpidtdy).where("Container_Id", isEqualTo: container_id_tdy).orderBy("Pump_Record_Id").get().then((val1) => {
+                                                                                        if (val1.docs.length > 0)
+                                                                                          {
+                                                                                            if (val1.docs.length > 1)
+                                                                                              {
+                                                                                                previous_record_id = val1.docs[val1.docs.length - 2].get("Pump_Record_Id"),
+                                                                                                print("previous idddd ${previous_record_id}"),
+                                                                                                previous_record = val1.docs[val1.docs.length - 2].get("Record"),
+                                                                                                print("previous record ${previous_record}"),
+                                                                                                print('val.docs[j].get("Record") ${val.docs[j].get("Record")}'),
+                                                                                                totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * lastpricetdy),
+                                                                                                totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * lastprofittdy),
+                                                                                                print("Torla billll a ${totalbilltdy}"),
+                                                                                                print("Torla profittt a ${totalprofittoday}"),
+                                                                                              }
+                                                                                            else
+                                                                                              {
+                                                                                                totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * lastpricetdy),
+                                                                                                totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * lastprofittdy),
+                                                                                                print("Torla billll a ${totalbilltdy}"),
+                                                                                                print("Torla profittt a ${totalprofittoday}"),
+                                                                                              }
+                                                                                          }
+                                                                                      }),
+                                                                                }
+                                                                            }
                                                                         }
-                                                                    }),                     
-                                                                      
-                                                                     }
-                                                                 
- 
-                                                                    
-                                                                  }
-                                                            }
-                                                          }),
+                                                                    }),
+                                                      }
+                                                  }
+                                              }),
+                                    }
+                                }),
 
-                              }
-                            }
-                        }),
-                        }
-                                    }),
-
-                      print('TOTAL BILL TODAYYY ${totalbilltdy}'),
-                      print('TOTAL profit TODAYYY ${totalprofittoday}'),
-                      
-
-                  }
-                  else{
-                    
-                    //get container id where
-                         await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Container')
-                        .where('Container_Name', isEqualTo: dropdownValue)
-                        .get()
-                        .then((val) async => {
-                          if(val.docs.length>0){
-                          container_id_tdy = val.docs[val.docs.length-1].get("Container_Id"),
-                                        // now get pump where containerid
-                               await FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc("Petrol Station 1")
-                        .collection('Pump')
-                        .where('Container_Id', isEqualTo: container_id_tdy)
-                        .get()
-                        .then((val) async => {
-                            if(val.docs.length>0){
-                              for(int i=0;i<val.docs.length;i++){
-                               pumpidtdy =val.docs[i].get("Pump_Id"),
-                                //get pump record 
-                                  await FirebaseFirestore.instance
-                                                          .collection('Stations')
-                                                          .doc("Petrol Station 1")
-                                                          .collection('Pump_Record')
-                                                          .where("Pump_Id", isEqualTo:pumpidtdy)
-                                                          .where("Record_Time" , isGreaterThanOrEqualTo:lastpricedate)
-                                                          .where("Record_Time" , isGreaterThanOrEqualTo: todayy)
-                                                          .get().then((val) async => {
-                                                            if(val.docs.length>0){
-                                                                  for(int j=0;j<val.docs.length;j++){
-                                                                   
-                                                                          if(val.docs[j].get("Pump_Record_Id")==1){
-                                                                        totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
-                                                                    totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
-                                                                   
-                                                                     }
-                                                                     else{
-
-                                                                      await FirebaseFirestore.instance.collection("Stations")
-                                                                    .doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id",isEqualTo: pumpidtdy)
-                                                                    .where("Container_Id",isEqualTo: container_id_tdy).orderBy("Pump_Record_Id").get()
-                                                                    .then((val1) => {
-
-                                                                        if(val1.docs.length>0){
-                                                                          if(val1.docs.length>1){
-                                                                        previous_record_id = val1.docs[val1.docs.length-2].get("Pump_Record_Id"),
-                                                                        print("previous idddd ${previous_record_id}"),
-                                                                        previous_record = val1.docs[val1.docs.length-2].get("Record"),
-                                                                        print("previous record ${previous_record}"),
-                                                                      
-                                                                        totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") -previous_record )  * lastpricetdy),
-                                                                      
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record") -previous_record ) * lastprofittdy),
-                                                                    
-                                                                          }
-                                                                          else{
-                                                                                           totalbilltdy = totalbilltdy + ( ( val.docs[j].get("Record") )  * lastpricetdy),
-                                                                        totalprofittoday = totalprofittoday + (( val.docs[j].get("Record")) * lastprofittdy),
-                                                                                          
-                                                                          }
+                        print('TOTAL BILL TODAYYY ${totalbilltdy}'),
+                        print('TOTAL profit TODAYYY ${totalprofittoday}'),
+                      }
+                    else
+                      {
+                        //get container id where
+                        await FirebaseFirestore.instance
+                            .collection('Stations')
+                            .doc("Petrol Station 1")
+                            .collection('Container')
+                            .where('Container_Name', isEqualTo: dropdownValue)
+                            .get()
+                            .then((val) async => {
+                                  if (val.docs.length > 0)
+                                    {
+                                      container_id_tdy = val
+                                          .docs[val.docs.length - 1]
+                                          .get("Container_Id"),
+                                      // now get pump where containerid
+                                      await FirebaseFirestore.instance
+                                          .collection('Stations')
+                                          .doc("Petrol Station 1")
+                                          .collection('Pump')
+                                          .where('Container_Id',
+                                              isEqualTo: container_id_tdy)
+                                          .get()
+                                          .then((val) async => {
+                                                if (val.docs.length > 0)
+                                                  {
+                                                    for (int i = 0;
+                                                        i < val.docs.length;
+                                                        i++)
+                                                      {
+                                                        pumpidtdy = val.docs[i]
+                                                            .get("Pump_Id"),
+                                                        //get pump record
+                                                        await FirebaseFirestore
+                                                            .instance
+                                                            .collection(
+                                                                'Stations')
+                                                            .doc(
+                                                                "Petrol Station 1")
+                                                            .collection(
+                                                                'Pump_Record')
+                                                            .where("Pump_Id",
+                                                                isEqualTo:
+                                                                    pumpidtdy)
+                                                            .where(
+                                                                "Record_Time",
+                                                                isGreaterThanOrEqualTo:
+                                                                    lastpricedate)
+                                                            .where(
+                                                                "Record_Time",
+                                                                isGreaterThanOrEqualTo:
+                                                                    todayy)
+                                                            .get()
+                                                            .then(
+                                                                (val) async => {
+                                                                      if (val.docs
+                                                                              .length >
+                                                                          0)
+                                                                        {
+                                                                          for (int j = 0;
+                                                                              j < val.docs.length;
+                                                                              j++)
+                                                                            {
+                                                                              if (val.docs[j].get("Pump_Record_Id") == 1)
+                                                                                {
+                                                                                  totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
+                                                                                  totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
+                                                                                }
+                                                                              else
+                                                                                {
+                                                                                  await FirebaseFirestore.instance.collection("Stations").doc("Petrol Station 1").collection("Pump_Record").where("Pump_Id", isEqualTo: pumpidtdy).where("Container_Id", isEqualTo: container_id_tdy).orderBy("Pump_Record_Id").get().then((val1) => {
+                                                                                        if (val1.docs.length > 0)
+                                                                                          {
+                                                                                            if (val1.docs.length > 1)
+                                                                                              {
+                                                                                                previous_record_id = val1.docs[val1.docs.length - 2].get("Pump_Record_Id"),
+                                                                                                print("previous idddd ${previous_record_id}"),
+                                                                                                previous_record = val1.docs[val1.docs.length - 2].get("Record"),
+                                                                                                print("previous record ${previous_record}"),
+                                                                                                totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * lastpricetdy),
+                                                                                                totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * lastprofittdy),
+                                                                                              }
+                                                                                            else
+                                                                                              {
+                                                                                                totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * lastpricetdy),
+                                                                                                totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * lastprofittdy),
+                                                                                              }
+                                                                                          }
+                                                                                      }),
+                                                                                }
+                                                                            }
                                                                         }
-                                                                    }),                     
-                                                                      
-                                                                     }
-                                                                 
-                                                                    
-                                                                  }
-                                                            }
-                                                          }),
+                                                                    }),
+                                                      }
+                                                  }
+                                              }),
+                                    }
+                                }),
 
-                              }
-                            }
-                        }),
-                        }
-                                    }),
-
-                            print('TOTAL BILL TODAYYY ${totalbilltdy}'),
-                      print('TOTAL profit TODAYYY ${totalprofittoday}'),
-                     
-
+                        print('TOTAL BILL TODAYYY ${totalbilltdy}'),
+                        print('TOTAL profit TODAYYY ${totalprofittoday}'),
+                      }
                   }
-          }});
-
+              });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // getarrayoffueltypes();
-      ff = DateFormat('yyyy/MM/dd');
-      todayy  = ff.parse(ff.format(DateTime.now()));
+    ff = DateFormat('yyyy/MM/dd');
+    todayy = ff.parse(ff.format(DateTime.now()));
 
     return Scaffold(
         backgroundColor: Colors.indigo[50],

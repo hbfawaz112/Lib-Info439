@@ -49,7 +49,7 @@ class _AddFuelTypeState extends State<AddFuelType> {
   }
 
   CloudServices cloudServices =
-      CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+  CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
 
   void add_fuel_type_fct() async {
     if (t1.text == '' || t2.text == '' || t3.text == '') {
@@ -96,14 +96,14 @@ class _AddFuelTypeState extends State<AddFuelType> {
           .orderBy('Fuel_Type_Id', descending: true)
           .get()
           .then((val) => {
-                if (val.docs.length > 0)
-                  {
-                    last_fuel_type_id = val.docs[0].get("Fuel_Type_Id"),
-                    print('last id is  : ${last_fuel_type_id}')
-                  }
-                else
-                  {print("Not Found")}
-              });
+        if (val.docs.length > 0)
+          {
+            last_fuel_type_id = val.docs[0].get("Fuel_Type_Id"),
+            print('last id is  : ${last_fuel_type_id}')
+          }
+        else
+          {print("Not Found")}
+      });
       // 2- Get the last price-profit id :
       await FirebaseFirestore.instance
           .collection('Stations')
@@ -112,15 +112,15 @@ class _AddFuelTypeState extends State<AddFuelType> {
           .orderBy('Price_Profit_Id', descending: true)
           .get()
           .then((val) => {
-                if (val.docs.length > 0)
-                  {
-                    last_price_prfit_id = val.docs[0].get("Price_Profit_Id"),
-                    print('last id is  : ${last_price_prfit_id}')
-                  }
-                else
-                  {print("Not Found")}
-              });
-     
+        if (val.docs.length > 0)
+          {
+            last_price_prfit_id = val.docs[0].get("Price_Profit_Id"),
+            print('last id is  : ${last_price_prfit_id}')
+          }
+        else
+          {print("Not Found")}
+      });
+
 
       //get the new fuel_type_id :
       new_fuel_type_id = last_fuel_type_id + 1;
@@ -145,10 +145,10 @@ class _AddFuelTypeState extends State<AddFuelType> {
         'Fuel_Type_Id': t1.text,
         'Official_Price': int.parse(t2.text),
         'Official_Profit':int.parse(t3.text),
-        
+
         'Price_Profit_Id': last_price_prfit_id + 1
       });
-        t1.text='';t2.text='';t3.text='';
+      t1.text='';t2.text='';t3.text='';
     }
   }
 
@@ -194,7 +194,7 @@ class _AddFuelTypeState extends State<AddFuelType> {
                       children: [
                         Text("Fuel Type",
                             style:
-                                TextStyle(fontSize: 21, color: Colors.black45)),
+                            TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
                             controller: t1,
@@ -225,7 +225,7 @@ class _AddFuelTypeState extends State<AddFuelType> {
                         ),
                         Text("Official Price ",
                             style:
-                                TextStyle(fontSize: 21, color: Colors.black45)),
+                            TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
                             controller: t2,
@@ -257,7 +257,7 @@ class _AddFuelTypeState extends State<AddFuelType> {
                         ),
                         Text("Profit",
                             style:
-                                TextStyle(fontSize: 21, color: Colors.black45)),
+                            TextStyle(fontSize: 21, color: Colors.black45)),
                         SizedBox(height: 10),
                         TextFormField(
                             controller: t3,

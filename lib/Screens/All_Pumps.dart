@@ -49,7 +49,24 @@ class _AllPumpsState extends State<AllPumps> {
     // when aiming to use the fct in initState
     if (loggedInUser != null) {
       station = await cloudServices.getUserStation(loggedInUser);
+      getFirstCategory();
     }
+  }
+
+  void getFirstCategory() async {
+    var s = await db
+        .collection('Stations')
+        .doc(station)
+        .collection('Container')
+        .get()
+        .then((val) => {
+              if (val.docs.length > 0)
+                {
+                  category = val.docs[0].get("Container_Name"),
+                }
+              else
+                {print("Not Found")}
+            });
   }
 
   void Add_Pump() async {
@@ -226,18 +243,22 @@ class _AllPumpsState extends State<AllPumps> {
                                 controller: t1,
                                 style: TextStyle(color: Colors.black),
                                 decoration: InputDecoration(
-                                    enabledBorder: const OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Colors.black, width: 2.0),
-                                    ),
-                                    labelText: "Pump Name",
-                                    fillColor: Colors.white,
-                                    labelStyle:
-                                        TextStyle(color: Colors.black45),
-                                    focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.blueAccent,
-                                            width: 2.0))),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.blueAccent),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(32.0)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.blueAccent, width: 2.0),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(32.0)),
+                                  ),
+                                  labelText: "Pump Name",
+                                  fillColor: Colors.white,
+                                  labelStyle: TextStyle(color: Colors.black45),
+                                ),
                                 onChanged: (String s) {}),
                             Text(
                               pump_name_error == 1 ? 'Enter a pump name' : '',
@@ -251,49 +272,43 @@ class _AllPumpsState extends State<AllPumps> {
                                     fontSize: 21, color: Colors.black45)),
                             SizedBox(height: 10),
                             StreamBuilder(
-                                stream: FirebaseFirestore.instance
-                                    .collection('Stations')
-                                    .doc(station)
-                                    .collection('Container')
-                                    .snapshots(),
-                                builder: (context,
-                                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                                  if (!snapshot.hasData)
-                                    Center(
-                                      child: const CupertinoActivityIndicator(),
-                                    );
-
+                              stream: db
+                                  .collection('Stations')
+                                  .doc(station)
+                                  .collection('Container')
+                                  .snapshots(),
+                              builder: (context,
+                                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                                if (snapshot.hasData) {
                                   return Container(
-                                      width: 350.0,
-                                      height: 58,
-                                      decoration: ShapeDecoration(
-                                        shape: RoundedRectangleBorder(
-                                          side: BorderSide(
-                                              width: 1.0,
-                                              style: BorderStyle.solid),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(5.0)),
-                                        ),
+                                    width: 350.0,
+                                    height: 58,
+                                    decoration: ShapeDecoration(
+                                      shape: RoundedRectangleBorder(
+                                        side: BorderSide(
+                                            width: 1.0,
+                                            style: BorderStyle.solid),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(15.0)),
                                       ),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
                                       child: DropdownButton<String>(
                                         isExpanded: true,
+                                        value: category,
                                         icon: const Icon(Icons.arrow_drop_down),
                                         iconSize: 24,
                                         elevation: 16,
                                         style: const TextStyle(
-                                            color: Colors.black45),
-
-                                        value: category,
-                                        //isDense: true,
-                                        hint: Text(
-                                          'Container Name',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                          ),
+                                            color: Colors.deepPurple),
+                                        underline: Container(
+                                          height: 2,
+                                          color: Colors.deepPurpleAccent,
                                         ),
-                                        onChanged: (newValue) {
+                                        onChanged: (String newValue) {
                                           setState(() {
                                             category = newValue;
+                                            //getVolume();
                                           });
                                         },
                                         items: snapshot.data != null
@@ -305,16 +320,7 @@ class _AllPumpsState extends State<AllPumps> {
                                                         .get('Container_Name')
                                                         .toString(),
                                                     child: new Container(
-                                                      // height: 20.0,
-
-                                                      //color: primaryColor,
-
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                    .only(
-                                                                top: 7,
-                                                                left: 8),
+                                                      child: Center(
                                                         child: new Text(
                                                           document
                                                               .get(
@@ -330,14 +336,20 @@ class _AllPumpsState extends State<AllPumps> {
                                                     ));
                                               }).toList()
                                             : DropdownMenuItem(
-                                                value: 'null',
+                                                value: category,
                                                 child: new Container(
                                                   height: 100.0,
                                                   child: new Text('null'),
                                                 ),
                                               ),
-                                      ));
-                                }),
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  return Text('');
+                                }
+                              },
+                            ),
                             SizedBox(
                               height: 20,
                             ),
@@ -350,18 +362,22 @@ class _AllPumpsState extends State<AllPumps> {
                                 controller: t2,
                                 style: TextStyle(color: Colors.black),
                                 decoration: InputDecoration(
-                                    enabledBorder: const OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Colors.black, width: 2.0),
-                                    ),
-                                    labelText: "0",
-                                    fillColor: Colors.white,
-                                    labelStyle:
-                                        TextStyle(color: Colors.black45),
-                                    focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.blueAccent,
-                                            width: 2.0))),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.blueAccent),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(32.0)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.blueAccent, width: 2.0),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(32.0)),
+                                  ),
+                                  labelText: "0",
+                                  fillColor: Colors.white,
+                                  labelStyle: TextStyle(color: Colors.black45),
+                                ),
                                 onChanged: (String s) {}),
                             Text(
                               initial_counter_error == 1

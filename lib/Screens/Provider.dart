@@ -18,6 +18,8 @@ class _ProvidersState extends State<Providers> {
   int last_provider_id;
   int new_provider_id;
 
+  int save = 0;
+
   String selecting_provider;
   TextEditingController t3 = new TextEditingController();
   TextEditingController t4 = new TextEditingController();
@@ -25,6 +27,8 @@ class _ProvidersState extends State<Providers> {
   String selected_Phone;
 
   bool isfilled = true;
+  bool readOnlyOption = true, enable = false;
+  Color fillColor = Colors.black12;
 
   bool add_privder_name_error = false;
 
@@ -188,17 +192,22 @@ class _ProvidersState extends State<Providers> {
                               controller: t1,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: "Provider Name",
-                                  fillColor: Colors.white,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: "Provider Name",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
                           Text("Provider Phone",
@@ -209,17 +218,22 @@ class _ProvidersState extends State<Providers> {
                               controller: t2,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: "ex:01111111",
-                                  fillColor: Colors.white,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: "ex:01111111",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
                           ButtonTheme(
@@ -288,61 +302,68 @@ class _ProvidersState extends State<Providers> {
                                             width: 1.0,
                                             style: BorderStyle.solid),
                                         borderRadius: BorderRadius.all(
-                                            Radius.circular(5.0)),
+                                            Radius.circular(15.0)),
                                       ),
                                     ),
-                                    child: DropdownButton<String>(
-                                      isExpanded: true,
-                                      icon: const Icon(Icons.arrow_drop_down),
-                                      iconSize: 24,
-                                      elevation: 16,
-                                      style: const TextStyle(
-                                          color: Colors.black45),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        isExpanded: true,
+                                        icon: const Icon(Icons.arrow_drop_down),
+                                        iconSize: 24,
+                                        elevation: 16,
+                                        style: const TextStyle(
+                                            color: Colors.deepPurple),
+                                        underline: Container(
+                                          height: 2,
+                                          color: Colors.deepPurpleAccent,
+                                        ),
+                                        value: selecting_provider,
+                                        //isDense: true,
+                                        hint: Text('Fuel Type'),
+                                        onChanged: (newValue) {
+                                          Provider_changed(newValue);
+                                        },
+                                        items: snapshot.data != null
+                                            ? snapshot.data.docs.map(
+                                                (DocumentSnapshot document) {
+                                                return new DropdownMenuItem<
+                                                        String>(
+                                                    value: document
+                                                        .get('Provider_Name')
+                                                        .toString(),
+                                                    child: new Container(
+                                                      // height: 20.0,
 
-                                      value: selecting_provider,
-                                      //isDense: true,
-                                      hint: Text('Fuel Type'),
-                                      onChanged: (newValue) {
-                                        Provider_changed(newValue);
-                                      },
-                                      items: snapshot.data != null
-                                          ? snapshot.data.docs
-                                              .map((DocumentSnapshot document) {
-                                              return new DropdownMenuItem<
-                                                      String>(
-                                                  value: document
-                                                      .get('Provider_Name')
-                                                      .toString(),
-                                                  child: new Container(
-                                                    // height: 20.0,
+                                                      //color: primaryColor,
 
-                                                    //color: primaryColor,
-
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 7, left: 8),
-                                                      child: new Text(
-                                                        document
-                                                            .get(
-                                                                'Provider_Name')
-                                                            .toString(),
-                                                        style: TextStyle(
-                                                            fontSize: 20,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w900),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .only(
+                                                                top: 7,
+                                                                left: 8),
+                                                        child: new Text(
+                                                          document
+                                                              .get(
+                                                                  'Provider_Name')
+                                                              .toString(),
+                                                          style: TextStyle(
+                                                              fontSize: 20,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ));
-                                            }).toList()
-                                          : DropdownMenuItem(
-                                              value: 'null',
-                                              child: new Container(
-                                                height: 100.0,
-                                                child: new Text('null'),
+                                                    ));
+                                              }).toList()
+                                            : DropdownMenuItem(
+                                                value: 'null',
+                                                child: new Container(
+                                                  height: 100.0,
+                                                  child: new Text('null'),
+                                                ),
                                               ),
-                                            ),
+                                      ),
                                     ));
                               }),
                           SizedBox(height: 20),
@@ -351,24 +372,36 @@ class _ProvidersState extends State<Providers> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
+                              enabled: enable,
+                              readOnly: readOnlyOption,
                               controller: t3,
                               // enableInteractiveSelection: false,
                               focusNode: FocusNode(),
                               //readOnly: true,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: "Provider Name",
-                                  fillColor: Colors.black12,
-                                  filled: isfilled,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: "Provider Name",
+                                fillColor: fillColor,
+                                filled: isfilled,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
                           Text("Provider Phone",
@@ -376,24 +409,37 @@ class _ProvidersState extends State<Providers> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
+                              enabled: enable,
+                              readOnly: readOnlyOption,
                               controller: t4,
+
                               // enableInteractiveSelection: false,
                               focusNode: FocusNode(),
                               //readOnly: true,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: "01000000",
-                                  fillColor: Colors.black12,
-                                  filled: isfilled,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.blueAccent, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: "01000000",
+                                fillColor: fillColor,
+                                filled: isfilled,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
                               onChanged: (String s) {}),
                           SizedBox(height: 15),
                           ButtonTheme(
@@ -410,12 +456,21 @@ class _ProvidersState extends State<Providers> {
                                     SizedBox(
                                       width: 14,
                                     ),
-                                    Text('Edit',
+                                    Text(save == 0 ? 'Edit' : 'Save',
                                         style: TextStyle(
                                             color: Colors.white, fontSize: 25)),
                                   ]),
                               onPressed: () {
-                                update_provider();
+                                if (save == 0) {
+                                  setState(() {
+                                    enable = true;
+                                    save = 1;
+                                    fillColor = Colors.white;
+                                    readOnlyOption = false;
+                                  });
+                                } else {
+                                  update_provider();
+                                }
                               },
                             ),
                           ),
