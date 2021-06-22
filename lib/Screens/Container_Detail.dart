@@ -1,11 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_petrol_station/Services/cloud_services.dart';
-import 'package:flutter_petrol_station/Widgets/Drawer.dart';
+import 'package:flutter_petrol_station/widgets/Drawer.dart';
+import 'package:pattern_formatter/numeric_formatter.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_petrol_station/services/cloud_services.dart';
 
 class Container_Details extends StatefulWidget {
+  static String idd = "Container_Details";
   String name;
   int id;
   Container_Details(this.id, this.name);
@@ -15,46 +17,47 @@ class Container_Details extends StatefulWidget {
 }
 
 class _Container_DetailsState extends State<Container_Details> {
-   User loggedInUser;
-    String station;
-    String idd;
-     CloudServices cloudServices =
+  static String idd = "Container_Detail";
+  int id;
+  TextEditingController t1 = new TextEditingController();
+  int volume;
+  int newvolume, reduceVolume;
+  String station;
+  User loggedInUser;
+  FirebaseFirestore db = FirebaseFirestore.instance;
+  CloudServices cloudServices =
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
+  int volumeError = 0;
+  Color colorV = Colors.blueAccent;
 
-      int id;
-      TextEditingController t1 = new TextEditingController();
-      int volume;
-      int newvolume;
-      int max_volume_error=-1;
+  @override
+  void initState() {
+    super.initState();
+    loggedInUser = cloudServices.getCurrentUser();
+    asyncMethod();
+    print("inittt");
+    print(station);
+    // future that allows us to access context. function is called inside the future
+    // otherwise it would be skipped and args would return null
+    //getContainerInfo(widget.pumpID);
+    //print(station);
+  }
 
-       void asyncMethod () async{
+  void asyncMethod() async {
+    // we do this to call a fct that need async wait when calling it;
+    // when aiming to use the fct in initState
     if (loggedInUser != null) {
       station = await cloudServices.getUserStation(loggedInUser);
-      print(' your station is : ${station}');
     }
+
     setState(() {});
+    // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
+    // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
   }
 
-    @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-     loggedInUser = cloudServices.getCurrentUser();
-    idd=loggedInUser.uid;
-    print('okiii ${idd}');
-    asyncMethod();
-     id=widget.id;
-    print('the id id ${id}');
-  }
-   
-    
-  
-    void update_volume() async{
-
-
-
-      //get the volume of specific container id;
-      var s = await FirebaseFirestore.instance
+  void update_volume() async {
+    //get the volume of specific container id;
+    var s = await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Container')
@@ -63,30 +66,26 @@ class _Container_DetailsState extends State<Container_Details> {
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                 
                   volume = val.docs[0].get("Volume"),
                   print('Current volume is ${volume}')
                 }
               else
                 {print("Not Found")}
             });
-        if(int.parse(t1.text)>volume){
-              setState(() {
-                max_volume_error=1;
-              });
-        }else{
-           setState(() {
-                max_volume_error=-1;
-              });
-      newvolume = volume - int.parse(t1.text);
-       FirebaseFirestore.instance
+
+    newvolume = volume - reduceVolume;
+    print(newvolume);
+    FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Container')
-        .doc('${id}')
-        .update({'Volume':newvolume});
-        }
-    }
+        .doc((widget.id).toString())
+        .update({'Volume': newvolume});
+
+    setState(() {
+      reduceVolume = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,47 +129,88 @@ class _Container_DetailsState extends State<Container_Details> {
                                   fontSize: 21, color: Colors.black45)),
                           SizedBox(height: 10),
                           TextFormField(
-                            keyboardType: TextInputType.number,
-                            controller: t1,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                ThousandsFormatter(),
+                              ],
+                              controller: t1,
                               style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                        color: Colors.black, width: 2.0),
-                                  ),
-                                  labelText: "",
-                                  fillColor: Colors.white,
-                                  labelStyle: TextStyle(color: Colors.black45),
-                                  focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2.0))),
-                              onChanged: (String s) {}),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: colorV),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: colorV, width: 2.0),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(32.0)),
+                                ),
+                                labelText: "",
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(color: Colors.black45),
+                              ),
+                              onChanged: (String s) {
+                                String g = s.replaceAll(RegExp(','), '');
+                                reduceVolume = int.parse(g);
+                              }),
+                          Text(
+                            volumeError == 1
+                                ? 'Enter value positive value'
+                                : '',
+                            style: TextStyle(color: colorV),
+                          ),
                           SizedBox(height: 15),
-                          Text(max_volume_error==1?'You must select a volume with maximum value ${volume}':'',style: TextStyle(color: Colors.red,fontSize: 22.0)),
                           Divider(color: Colors.black38),
                           Divider(color: Colors.black38),
                           SizedBox(height: 15),
-                          ButtonTheme(
-                            height: 50.0,
-                            minWidth: 130,
-                            child: RaisedButton(
-                              color: Colors.indigo[800],
-                              elevation: 12,
-                              child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.library_add_check_outlined,
-                                        size: 22, color: Colors.white),
-                                    SizedBox(
-                                      width: 14,
-                                    ),
-                                    Text('Save',
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 25)),
-                                  ]),
-                              onPressed: () {update_volume();},
+                          TextButton(
+                            style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all(Colors.indigo),
+                              shape: MaterialStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                              ),
                             ),
+                            child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.library_add_check_outlined,
+                                      size: 22, color: Colors.white),
+                                  SizedBox(
+                                    width: 14,
+                                  ),
+                                  Text('Save',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 25)),
+                                ]),
+                            onPressed: () {
+                              //int reduceVolume = int.parse(t1.text);
+                              print('saveeeeeeeeeeeeeeeee');
+                              print(station);
+                              print('${widget.id}');
+                              if (reduceVolume == null) {
+                                setState(() {
+                                  volumeError = 1;
+                                  colorV = Colors.red;
+                                });
+                              }
+
+                              if (reduceVolume != null) {
+                                setState(() {
+                                  volumeError = 0;
+                                  colorV = Colors.blueAccent;
+                                  update_volume();
+                                  //reduceVolume = null;
+                                });
+
+                                t1.clear();
+                              }
+                            },
                           ),
                         ]))
                   ])),
@@ -195,48 +235,48 @@ class _Container_DetailsState extends State<Container_Details> {
             child: Padding(
               padding: const EdgeInsets.all(15.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                Text('Container ${widget.name} ',
-                    style: TextStyle(
-                        color: Colors.indigo[900],
-                        fontSize: 37,
-                        fontWeight: FontWeight.w900)),
-                SizedBox(height: 20),
-                StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection('Stations')
-                        .doc('Petrol Station 1')
-                        .collection('Container')
-                        .where('Container_Id', isEqualTo: widget.id)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                         DocumentSnapshot documentSnapshot = snapshot.data.docs[0];
-                        return  Expanded(
-                                    
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left:28),
-                                      child: LinearPercentIndicator(
-                                  width:
-                                        MediaQuery.of(context).size.width - 110,
-                                  animation: true,
-                                  lineHeight: 20.0,
-                                  animationDuration: 2500,
-                                  percent: documentSnapshot['Volume']/documentSnapshot['Capacity'],
-                                  center: Text(
-                                      '${documentSnapshot['Volume']} L',
-                                      style: TextStyle(fontSize: 20.0),
-                                  ),
-                                  linearStrokeCap: LinearStrokeCap.roundAll,
-                                  progressColor: Colors.green,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Container ${widget.name} ',
+                        style: TextStyle(
+                            color: Colors.indigo[900],
+                            fontSize: 37,
+                            fontWeight: FontWeight.w900)),
+                    SizedBox(height: 20),
+                    StreamBuilder(
+                        stream: FirebaseFirestore.instance
+                            .collection('Stations')
+                            .doc(station)
+                            .collection('Container')
+                            .where('Container_Id', isEqualTo: widget.id)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            DocumentSnapshot documentSnapshot =
+                                snapshot.data.docs[0];
+                            return Expanded(
+                                child: Padding(
+                              padding: const EdgeInsets.only(left: 28),
+                              child: LinearPercentIndicator(
+                                width: MediaQuery.of(context).size.width - 110,
+                                animation: true,
+                                lineHeight: 20.0,
+                                animationDuration: 2500,
+                                percent: documentSnapshot['Volume'] /
+                                    documentSnapshot['Capacity'],
+                                center: Text(
+                                  '${documentSnapshot['Volume']} L',
+                                  style: TextStyle(fontSize: 20.0),
                                 ),
-                                    ));
-                      } else {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                    }),
-              ]),
+                                linearStrokeCap: LinearStrokeCap.roundAll,
+                                progressColor: Colors.green,
+                              ),
+                            ));
+                          } else {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                        }),
+                  ]),
             ),
           ),
         ]));
