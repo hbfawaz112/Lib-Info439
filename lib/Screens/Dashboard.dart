@@ -6,8 +6,12 @@ import 'package:flutter_petrol_station/Services/cloud_services.dart';
 import 'package:flutter_petrol_station/Widgets/Drawer.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
+import 'package:flutter_petrol_station/Screens/Pump_Records.dart';
+
 import 'Login_Screen.dart';
 import 'Login_v2.dart';
+import 'Pump_Records.dart';
+import 'Shipments.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -164,9 +168,22 @@ class _DashboardState extends State<Dashboard> {
                                         return Padding(
                                           padding: const EdgeInsets.all(8.0),
                                           child: Center(
-                                            child: Text('    ${documentSnapshot1["Pump_Name"]}',
+                                            child: InkWell(
+                                              onTap: (){
+                                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => 
+                                      Pump_Records(
+                                 pumpID: documentSnapshot1["Pump_Id"],
+                                pumpName: documentSnapshot1["Pump_Name"])
+                                      ),
+                                );
+                                              },
+                              child: Text('    ${documentSnapshot1["Pump_Name"]}',
                         style: TextStyle(fontSize: 20, color: Colors.indigo[200]),
                         ),
+                                            ),
                                           ),
                                         );
                                       });
@@ -189,7 +206,7 @@ class _DashboardState extends State<Dashboard> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => null),
+                                      builder: (context) => Shipments()),
                                 );
                               },
                             ),
