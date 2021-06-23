@@ -30,6 +30,10 @@ class _AccountingState extends State<Accounting> {
   String nameob;
   var fuel_types;
   int pumpidtdy;
+  TextEditingController t1 = new TextEditingController();
+  TextEditingController t2 = new TextEditingController();
+  int cont_id;
+    String cont_name;
 
   DateTime lastpricedate, lastprofitdate;
   DateTime datetimetoday = DateTime.now();
@@ -40,6 +44,10 @@ class _AccountingState extends State<Accounting> {
   int lastpricetdy, lastprofittdy;
   int previous_price,previous_profit;
   DateTime previous_price_date;
+  int sum_littres=0;
+
+  DateTime T1,T2;
+  List<DateTime> AllDateTime;
   void getlastreacord() async {
     setState(() {
       isloading = true;
@@ -203,10 +211,10 @@ class _AccountingState extends State<Accounting> {
   }
 
   void gettoday() async {
+    sum_littres=0;
     totalbilltdy = 0;
     totalprofittoday = 0;
-    int cont_id;
-    String cont_name;
+    
     if (dropdownValue == "All Fuel Type") {
       await FirebaseFirestore.instance
           .collection('Stations')
@@ -217,7 +225,7 @@ class _AccountingState extends State<Accounting> {
                 if (val.docs.length > 0)
                   {
                     for (int k = 0; k < val.docs.length; k++)
-                      {
+                      { sum_littres=0,
                         cont_id = val.docs[k].get("Container_Id"),
                         cont_name = val.docs[k].get("Container_Name"),
                         await FirebaseFirestore.instance
@@ -330,6 +338,8 @@ class _AccountingState extends State<Accounting> {
                                                                                     {
                                                                                       totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
                                                                                       totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * lastprofittdy),
+                                                                                       sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                       print("Torla billll a ${totalbilltdy}"),
                                                                                       print("Torla profittt a ${totalprofittoday}"),
                                                                                     }
@@ -340,17 +350,23 @@ class _AccountingState extends State<Accounting> {
                                                                                               {
                                                                                                 if (val1.docs.length > 1)
                                                                                                   {
+                                                                                                     
                                                                                                     previous_record_id = val1.docs[val1.docs.length - 2].get("Pump_Record_Id"),
                                                                                                     print("previous idddd ${previous_record_id}"),
                                                                                                     previous_record = val1.docs[val1.docs.length - 2].get("Record"),
                                                                                                     print("previous record ${previous_record}"),
                                                                                                     totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * lastpricetdy),
                                                                                                     totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * lastprofittdy),
+                                                                                                    
+                                                                                                    sum_littres = sum_littres+ ( val.docs[j].get("Record") - previous_record) ,
+                                                                                 
                                                                                                     print("Torla billll a ${totalbilltdy}"),
                                                                                                     print("Torla profittt a ${totalprofittoday}"),
                                                                                                   }
                                                                                                 else
                                                                                                   {
+                                                                                                     sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                                     totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * lastpricetdy),
                                                                                                     totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * lastprofittdy),
                                                                                                     print("Torla billll a ${totalbilltdy}"),
@@ -359,7 +375,8 @@ class _AccountingState extends State<Accounting> {
                                                                                               }
                                                                                           }),
                                                                                     }
-                                                                                }
+                                                                                },
+                                                                                print("sum_littres IS ${sum_littres}")
                                                                             }
                                                                         }),
                                                           }
@@ -394,6 +411,11 @@ class _AccountingState extends State<Accounting> {
                                                             pumpidtdy = val
                                                                 .docs[i]
                                                                 .get("Pump_Id"),
+                                                                print("previous_price_date ${previous_price_date}"),
+                                                                print("previous_price_price ${previous_price}"),
+                                                                print("previous_price_profit ${previous_profit}"),
+                                                                print("pumpidtdy ${pumpidtdy}"),
+                                                                print("todayy ${todayy}"),
                                                             //get pump record
                                                             await FirebaseFirestore
                                                                 .instance
@@ -423,10 +445,14 @@ class _AccountingState extends State<Accounting> {
                                                                               0)
                                                                             {
                                                                               print('if length > 0  record > today'),
+                                                                              //sum_littres=0,
                                                                               for (int j = 0; j < val.docs.length; j++)
                                                                                 {
+                                                                                 
                                                                                   if (val.docs[j].get("Pump_Record_Id") == 1)
                                                                                     {
+                                                                                        sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                       totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * previous_price),
                                                                                       totalprofittoday = totalprofittoday + (val.docs[j].get("Record") * previous_profit),
                                                                                       print("Torla billll a ${totalbilltdy}"),
@@ -445,11 +471,15 @@ class _AccountingState extends State<Accounting> {
                                                                                                     print("previous record ${previous_record}"),
                                                                                                     totalbilltdy = totalbilltdy + ((val.docs[j].get("Record") - previous_record) * previous_price),
                                                                                                     totalprofittoday = totalprofittoday + ((val.docs[j].get("Record") - previous_record) * previous_profit),
+                                                                                                    sum_littres = sum_littres+ (val.docs[j].get("Record") - previous_record),
+                                                                                 
                                                                                                     print("Torla billll a ${totalbilltdy}"),
                                                                                                     print("Torla profittt a ${totalprofittoday}"),
                                                                                                   }
                                                                                                 else
                                                                                                   {
+                                                                                                      sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                                     totalbilltdy = totalbilltdy + ((val.docs[j].get("Record")) * previous_price),
                                                                                                     totalprofittoday = totalprofittoday + ((val.docs[j].get("Record")) * previous_profit),
                                                                                                     print("Torla billll a ${totalbilltdy}"),
@@ -458,10 +488,14 @@ class _AccountingState extends State<Accounting> {
                                                                                               }
                                                                                           }),
                                                                                     }
-                                                                                }
+                                                                                },
+                                                                                
                                                                             }
                                                                         }),
-                                                          }
+                                                                       
+
+                                                          },
+                                                         
                                                       }
                                                   }),
 
@@ -479,16 +513,21 @@ class _AccountingState extends State<Accounting> {
 
                                       
                                     }
-                                })
+                                }),
+                    print("sum littre ${sum_littres} for container ${cont_name}"),
+
                       }
                   }
               });
       print('TOTAL BILL TODAYYY ${totalbilltdy}');
       print('TOTAL profit TODAYYY ${totalprofittoday}');
+      print('TOTAL litree TODAYYY ${sum_littres}');
+      
     } 
     
     
     else {
+      sum_littres=0;
       totalbilltdy = 0;
       totalprofittoday = 0;
 
@@ -614,6 +653,8 @@ class _AccountingState extends State<Accounting> {
                                                                             {
                                                                               for (int j = 0; j < val.docs.length; j++)
                                                                                 {
+                                                                                   sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                   if (val.docs[j].get("Pump_Record_Id") == 1)
                                                                                     {
                                                                                       totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * lastpricetdy),
@@ -647,7 +688,8 @@ class _AccountingState extends State<Accounting> {
                                                                                               }
                                                                                           }),
                                                                                     }
-                                                                                }
+                                                                                },
+                                                                               
                                                                             }
                                                                         }),
                                                           }
@@ -713,6 +755,8 @@ class _AccountingState extends State<Accounting> {
                                                                               print('if length > 0  record > today'),
                                                                               for (int j = 0; j < val.docs.length; j++)
                                                                                 {
+                                                                                   sum_littres = sum_littres+ val.docs[j].get("Record"),
+                                                                                 
                                                                                   if (val.docs[j].get("Pump_Record_Id") == 1)
                                                                                     {
                                                                                       totalbilltdy = totalbilltdy + (val.docs[j].get("Record") * previous_price),
@@ -745,8 +789,11 @@ class _AccountingState extends State<Accounting> {
                                                                                                   }
                                                                                               }
                                                                                           }),
-                                                                                    }
+                                                                                    },
+                                                                                           print("sum_littres is  ${sum_littres}"),
+
                                                                                 }
+                                                                                
                                                                             }
                                                                         }),
                                                           }
@@ -773,6 +820,110 @@ class _AccountingState extends State<Accounting> {
                   }
               });
     }
+  }
+
+    List<DateTime> getDaysInBeteween(DateTime startDate, DateTime endDate) {
+    List<DateTime> days = [];
+    for (int i = 0; i <= endDate.difference(startDate).inDays; i++) {
+      days.add(
+       DateTime(
+          startDate.year, 
+          startDate.month, 
+          // In Dart you can set more than. 30 days, DateTime will do the trick
+          startDate.day + i)
+      );
+    }
+    return days;
+}
+
+  void submitbtn() async{
+    T1 = ff.parse(t1.text);
+    T2 = ff.parse(t2.text);
+    
+    print("T1111 ${T1}");
+    print("T1111 ${T1}");
+    
+    AllDateTime = getDaysInBeteween(T1,T2);
+    //print(AllDateTime);  
+      if(dropdownValue == "All Fuel Type"){
+          for(int i = 0 ;i<AllDateTime.length;i++){
+
+              await FirebaseFirestore.instance
+          .collection('Stations')
+          .doc("Petrol Station 1")
+          .collection('Container')
+          .get()
+          .then((val) async => {
+                if (val.docs.length > 0)
+                  {
+                    for (int k = 0; k < val.docs.length; k++)
+                      {
+                        cont_id = val.docs[k].get("Container_Id"),
+                        cont_name = val.docs[k].get("Container_Name"),
+                        if(i==AllDateTime.length-1){
+                           await FirebaseFirestore.instance
+                          .collection('Stations')
+                          .doc("Petrol Station 1")
+                          .collection('Price-Pofit')
+                          .where('Fuel_Type_Id' ,isEqualTo : cont_name)
+                          .where('Date' , isGreaterThanOrEqualTo: AllDateTime[i])
+                          
+                          .get()
+                          .then((value) => {
+                                  if(value.docs.length>0){
+                                     lastpricetdy =
+                                          val.docs[0].get("Official_Price"),
+                                      lastprofittdy =
+                                          val.docs[0].get("Official_Profit"),
+                                      lastpricedate = DateTime.tryParse(
+                                          (val.docs[0].get("Date"))
+                                              .toDate()
+                                              .toString()),
+                                              print("Prices is ${lastpricetdy}"),
+                                              
+                                  }
+                          }),
+                        }else{
+                           await FirebaseFirestore.instance
+                          .collection('Stations')
+                          .doc("Petrol Station 1")
+                          .collection('Price-Pofit')
+                          .where('Fuel_Type_Id' ,isEqualTo : cont_name)
+                          .where('Date' , isGreaterThanOrEqualTo: AllDateTime[i])
+                          .where('Date' , isLessThanOrEqualTo: AllDateTime[i+1] )
+
+                          .get()
+                          .then((value) => {
+                                  if(value.docs.length>0){
+                                     lastpricetdy =
+                                          val.docs[0].get("Official_Price"),
+                                      lastprofittdy =
+                                          val.docs[0].get("Official_Profit"),
+                                      lastpricedate = DateTime.tryParse(
+                                          (val.docs[0].get("Date"))
+                                              .toDate()
+                                              .toString()),
+
+                                              print("Prices is ${lastpricetdy}"),
+
+                                  }
+                          }),
+                        }
+                      }
+                 }
+                 });
+          }
+            
+          }
+      
+
+
+
+
+
+      else{
+
+      }
   }
 
   @override
@@ -862,6 +1013,7 @@ class _AccountingState extends State<Accounting> {
                         style: TextStyle(fontSize: 21, color: Colors.black45)),
                     SizedBox(height: 10),
                     TextFormField(
+                      controller: t1,
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(
                             suffixIcon: Icon(Icons.date_range_rounded,
@@ -882,6 +1034,7 @@ class _AccountingState extends State<Accounting> {
                         style: TextStyle(fontSize: 21, color: Colors.black45)),
                     SizedBox(height: 10),
                     TextFormField(
+                        controller: t2,
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(
                             suffixIcon: Icon(Icons.date_range_rounded,
@@ -912,7 +1065,9 @@ class _AccountingState extends State<Accounting> {
                               child: Text('Submit',
                                   style: TextStyle(
                                       color: Colors.white, fontSize: 19)),
-                              onPressed: () {},
+                              onPressed: () {
+                                submitbtn();
+                              },
                             ),
                           ),
                           ButtonTheme(
@@ -1034,4 +1189,9 @@ class Fuel {
     this.id = id;
     this.name = name;
   }
+}
+
+
+class specificfuel{
+
 }
