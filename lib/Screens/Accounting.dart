@@ -1311,12 +1311,12 @@ class _AccountingState extends State<Accounting> {
     ff = DateFormat('yyyy/MM/dd');
     todayy = ff.parse(ff.format(DateTime.now()));
 
-    t2.text = ff.format(DateTime.now());
+   // t2.text = ff.format(DateTime.now());
     
     get_first_record_date();
     print(" ... first_record_data ... ${first_record_data}");
 
-    t1.text = ff.format(first_record_data);
+   // t1.text = ff.format(first_record_data);
     
     return Scaffold(
         backgroundColor: Colors.indigo[50],
@@ -1473,8 +1473,6 @@ class _AccountingState extends State<Accounting> {
                                   submit = 0;
                                   today = 1;
                                   lastR = 0;
-                                  t1.clear();
-                                  t2.clear();
                                   t1.text = ff.format(DateTime.now()).toString();
                                   t2.text = ff.format(DateTime.now()).toString();
                                 });
