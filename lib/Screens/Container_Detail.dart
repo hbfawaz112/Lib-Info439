@@ -29,6 +29,7 @@ class _Container_DetailsState extends State<Container_Details> {
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
   int volumeError = 0;
   Color colorV = Colors.blueAccent;
+  int max_volume_error=-1;
 
   @override
   void initState() {
@@ -37,6 +38,7 @@ class _Container_DetailsState extends State<Container_Details> {
     asyncMethod();
     print("inittt");
     print(station);
+
     // future that allows us to access context. function is called inside the future
     // otherwise it would be skipped and args would return null
     //getContainerInfo(widget.pumpID);
@@ -55,9 +57,12 @@ class _Container_DetailsState extends State<Container_Details> {
     // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
   }
 
-  void update_volume() async {
-    //get the volume of specific container id;
-    var s = await FirebaseFirestore.instance
+ void update_volume() async{
+
+
+
+      //get the volume of specific container id;
+      var s = await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Container')
@@ -66,27 +71,32 @@ class _Container_DetailsState extends State<Container_Details> {
         .then((val) => {
               if (val.docs.length > 0)
                 {
+                 
                   volume = val.docs[0].get("Volume"),
                   print('Current volume is ${volume}')
                 }
               else
                 {print("Not Found")}
             });
-
-    newvolume = volume - reduceVolume;
-    print(newvolume);
-    FirebaseFirestore.instance
+        if(int.parse(t1.text)>volume){
+              setState(() {
+                max_volume_error=1;
+                volumeError=1;
+              });
+        }else{
+           setState(() {
+                max_volume_error=-1;
+                volumeError=0;
+              });
+      newvolume = volume - int.parse(t1.text);
+       FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Container')
-        .doc((widget.id).toString())
-        .update({'Volume': newvolume});
-
-    setState(() {
-      reduceVolume = null;
-    });
-  }
-
+        .doc('${id}')
+        .update({'Volume':newvolume});
+        }
+    }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
