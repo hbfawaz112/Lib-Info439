@@ -67,7 +67,7 @@ class _PumpsState extends State<Pump_Records> {
     asyncMethod();
     print("inittt");
     print(station);
-    getPumpRecord();
+
     getContainerOldVolume();
     // future that allows us to access context. function is called inside the future
     // otherwise it would be skipped and args would return null
@@ -80,12 +80,16 @@ class _PumpsState extends State<Pump_Records> {
     // when aiming to use the fct in initState
     if (loggedInUser != null) {
       station = await cloudServices.getUserStation(loggedInUser);
+      await getPumpRecord();
+      await getContainerId(widget.pumpID);
+      print("asynccccc $containerID");
+      if (containerID != null) {
+        await getContainerName(containerID);
+      }
+
+      //  setState(() {});
     }
-    await getContainerId(widget.pumpID);
-    print("asynccccc $containerID");
-    if (containerID != null) {
-      await getContainerName(containerID);
-    }
+
     setState(() {});
     // hay l setState bhotta ekher shi bl fct yalle btrajj3 shi future krml yn3amal rebuild
     // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
@@ -153,7 +157,7 @@ class _PumpsState extends State<Pump_Records> {
     setState(() {});
   }
 
-  void getPumpRecord() {
+  void getPumpRecord() async {
     db
         .collection('Stations')
         .doc(station)
@@ -164,7 +168,7 @@ class _PumpsState extends State<Pump_Records> {
       if (value.docs.length > 0) {}
     });
 
-    var qs = db
+    var qs = await db
         .collection('Stations')
         .doc(station)
         .collection('Pump_Record')
@@ -199,7 +203,7 @@ class _PumpsState extends State<Pump_Records> {
                   print("elseeeee"),
                 }
             });
-    setState(() {});
+    //setState(() {});
   }
 
   void getContainerOldVolume() {

@@ -684,13 +684,13 @@ class _ShipmentsState extends State<Shipments> {
                       print(val.docs[i].get("Shipment_Volume")),
                       g += val.docs[i].get("Shipment_Volume"),
                     },
-                  setState(() {
-                    totalVolume = g;
-                  }),
+                  //setState(() {
+                  //totalVolume = g,
+                  //}),
                 }
               else
                 {print("Not Found")},
-              setState(() {}),
+              //setState(() {}),
             });
     int pp = 0;
     await FirebaseFirestore.instance
@@ -711,13 +711,13 @@ class _ShipmentsState extends State<Shipments> {
                       print(val.docs[i].get("Shipment_Value")),
                       pp += val.docs[i].get("Shipment_Value"),
                     },
-                  setState(() {
-                    totalPaid = pp;
-                  }),
+                  //setState(() {
+                  //totalPaid = pp,
+                  //}),
                 }
               else
                 {print("Not Found")},
-              setState(() {}),
+              //setState(() {}),
             });
     int dd = 0;
     await db
@@ -738,15 +738,19 @@ class _ShipmentsState extends State<Shipments> {
                       print(val.docs[i].get("Shipment_Value")),
                       dd += val.docs[i].get("Shipment_Value"),
                     },
-                  setState(() {
-                    totalDebt = dd;
-                  }),
+                  //setState(() {
+                  //totalDebt = dd,
+                  //}),
                 }
               else
                 {print("Not Found")},
-              setState(() {}),
+              //setState(() {}),
             });
-    //setState(() {});
+    // setState(() {
+    //   totalVolume = g;
+    //   totalPaid = pp;
+    //   totalDebt = dd;
+    // });
   }
 
   refreshFilter(
@@ -777,13 +781,15 @@ class _ShipmentsState extends State<Shipments> {
       CURRENCY_PATTERN: '\u00A4#,##0.00',
       DEF_CURRENCY_CODE: 'AUD',
     );
+
     totalVolume = 0;
     totalDebt = 0;
     totalPaid = 0;
-
+    //
     getDebtMoney();
     getPaidMoney();
     getTotalVolume();
+
     getLastDocId();
 
     print("builddddd $docId");
@@ -2112,6 +2118,7 @@ class _ShipmentsState extends State<Shipments> {
                                                                                         db.collection('Stations').doc(station).collection('Container').doc(containerrr_iddd.toString()).update({
                                                                                           'Volume': add_Volume
                                                                                         }).then((value) {
+                                                                                          setState(() {});
                                                                                           // int g = 0;
                                                                                           // db.collection('Stations').doc(station).collection('Shipment').get().then((val) => {
                                                                                           //       if (val.docs.length > 0)
@@ -2178,7 +2185,7 @@ class _ShipmentsState extends State<Shipments> {
                                                                                           //refresh();
 
                                                                                           //setState(() {
-                                                                                          refresh();
+                                                                                          //refresh();
                                                                                           //});
 
                                                                                           // setState(() {

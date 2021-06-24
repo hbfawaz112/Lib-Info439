@@ -172,7 +172,7 @@ class _LoginState extends State<Login> {
                                 //Navigator.pushNamed(context, Containers.id);
                                 Navigator.pushNamed(
                                   context,
-                                  Dashboard_Firstore.id,
+                                  Dashboard.id,
                                 );
                                 setState(() {
                                   emailError = 0;

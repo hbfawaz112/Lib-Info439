@@ -1,19 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_petrol_station/Screens/Fuel_Type.dart';
-import 'package:flutter_petrol_station/models/Fuel_Type.dart';
-import 'package:flutter_petrol_station/screens/Add_Container.dart';
-import 'package:flutter_petrol_station/screens/dashboard_firstore.dart';
-import 'package:flutter_petrol_station/screens/shipments.dart';
+import 'package:flutter_petrol_station/Screens/Add_Container.dart';
+import 'package:flutter_petrol_station/Screens/shipments.dart';
+
 import 'package:flutter_petrol_station/services/cloud_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_petrol_station/screens/pump_records.dart';
-import 'package:flutter_petrol_station/screens/All_Pumps.dart';
-import 'package:flutter_petrol_station/screens/Voucher.dart';
-import 'package:flutter_petrol_station/screens/Add_Fuel_Type.dart';
-import 'package:flutter_petrol_station/screens/Provider.dart';
-import 'package:flutter_petrol_station/screens/Container_Detail.dart';
+import 'package:flutter_petrol_station/Screens/pump_records.dart';
+import 'package:flutter_petrol_station/Screens/All_Pumps.dart';
+import 'package:flutter_petrol_station/Screens/Voucher.dart';
+import 'package:flutter_petrol_station/Screens/Add_Fuel_Type.dart';
+import 'package:flutter_petrol_station/Screens/Provider.dart';
+import 'package:flutter_petrol_station/Screens/Container_Detail.dart';
 import 'package:flutter_petrol_station/Screens/Fuel_Type.dart';
+import 'package:flutter_petrol_station/Screens/shipmenttry.dart';
+import 'package:flutter_petrol_station/Screens/Accounting.dart';
+import 'package:flutter_petrol_station/Screens/Customer.dart';
+import 'package:flutter_petrol_station/Screens/dashboard_firstore.dart';
+import 'package:flutter_petrol_station/Screens/AccountingTry.dart';
 
 class getDrawer extends StatefulWidget {
   @override
@@ -76,7 +80,7 @@ class _getDrawerState extends State<getDrawer> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Dashboard_Firstore()),
+            MaterialPageRoute(builder: (context) => Dashboard()),
           );
         },
       ),
@@ -181,7 +185,10 @@ class _getDrawerState extends State<getDrawer> {
               fontSize: 23,
             )),
         leading: Icon(Icons.group_outlined, color: Colors.grey, size: 35.0),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Customers()));
+        },
       ),
 
       ExpansionTile(
@@ -256,7 +263,10 @@ class _getDrawerState extends State<getDrawer> {
             )),
         leading: Icon(Icons.monetization_on_outlined,
             color: Colors.grey, size: 35.0),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Accounting()));
+        },
       ),
       new ListTile(
         title: Text("Provider",

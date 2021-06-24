@@ -29,7 +29,7 @@ class _Container_DetailsState extends State<Container_Details> {
       CloudServices(FirebaseFirestore.instance, FirebaseAuth.instance);
   int volumeError = 0;
   Color colorV = Colors.blueAccent;
-  int max_volume_error=-1;
+  int max_volume_error = -1;
 
   @override
   void initState() {
@@ -57,12 +57,9 @@ class _Container_DetailsState extends State<Container_Details> {
     // krml yontor l data yalle 3m trj3 mn l firestore bs n3aytla ll method
   }
 
- void update_volume() async{
-
-
-
-      //get the volume of specific container id;
-      var s = await FirebaseFirestore.instance
+  void update_volume() async {
+    //get the volume of specific container id;
+    var s = await FirebaseFirestore.instance
         .collection('Stations')
         .doc(station)
         .collection('Container')
@@ -71,32 +68,32 @@ class _Container_DetailsState extends State<Container_Details> {
         .then((val) => {
               if (val.docs.length > 0)
                 {
-                 
                   volume = val.docs[0].get("Volume"),
                   print('Current volume is ${volume}')
                 }
               else
                 {print("Not Found")}
             });
-        if(int.parse(t1.text)>volume){
-              setState(() {
-                max_volume_error=1;
-                volumeError=1;
-              });
-        }else{
-           setState(() {
-                max_volume_error=-1;
-                volumeError=0;
-              });
+    if (int.parse(t1.text) > volume) {
+      setState(() {
+        max_volume_error = 1;
+        volumeError = 1;
+      });
+    } else {
+      setState(() {
+        max_volume_error = -1;
+        volumeError = 0;
+      });
       newvolume = volume - int.parse(t1.text);
-       FirebaseFirestore.instance
-        .collection('Stations')
-        .doc(station)
-        .collection('Container')
-        .doc('${id}')
-        .update({'Volume':newvolume});
-        }
+      FirebaseFirestore.instance
+          .collection('Stations')
+          .doc(station)
+          .collection('Container')
+          .doc('${id}')
+          .update({'Volume': newvolume});
     }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,8 +237,10 @@ class _Container_DetailsState extends State<Container_Details> {
           ),
           Container(
             color: Colors.lightBlue,
-            width: 400,
-            height: 120,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height /
+                    MediaQuery.of(context).size.height +
+                200,
             child: Padding(
               padding: const EdgeInsets.all(15.0),
               child: Column(
@@ -268,7 +267,8 @@ class _Container_DetailsState extends State<Container_Details> {
                                 child: Padding(
                               padding: const EdgeInsets.only(left: 28),
                               child: LinearPercentIndicator(
-                                width: MediaQuery.of(context).size.width - 110,
+                                width: MediaQuery.of(context).size.width -
+                                    MediaQuery.of(context).size.width / 5,
                                 animation: true,
                                 lineHeight: 20.0,
                                 animationDuration: 2500,
