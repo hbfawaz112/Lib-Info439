@@ -68,7 +68,6 @@ class _PumpsState extends State<Pump_Records> {
     print("inittt");
     print(station);
 
-    getContainerOldVolume();
     // future that allows us to access context. function is called inside the future
     // otherwise it would be skipped and args would return null
     //getContainerInfo(widget.pumpID);
@@ -83,6 +82,7 @@ class _PumpsState extends State<Pump_Records> {
       await getPumpRecord();
       await getContainerId(widget.pumpID);
       print("asynccccc $containerID");
+      await getContainerOldVolume();
       if (containerID != null) {
         await getContainerName(containerID);
       }
@@ -206,8 +206,8 @@ class _PumpsState extends State<Pump_Records> {
     //setState(() {});
   }
 
-  void getContainerOldVolume() {
-    db
+  void getContainerOldVolume() async {
+    await db
         .collection('Stations')
         .doc(station)
         .collection('Container')
@@ -512,6 +512,8 @@ class _PumpsState extends State<Pump_Records> {
                             colorR = Colors.red;
                           });
                         } else {
+                          print(
+                              "new counterrr $newCounter previouss $previousCounter oldd volume $oldVolume");
                           if (newCounter - previousCounter > oldVolume) {
                             setState(() {
                               recordError = 1;
